@@ -9,7 +9,7 @@ export default function App() {
   return (
     <div className="app">
       <h1>Spendy</h1>
-      <p>Hello World!</p>
+      <p>Hello World!!</p>
 
       {needRefresh && (
         <div className="update-banner">

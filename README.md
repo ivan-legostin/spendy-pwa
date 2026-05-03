@@ -33,8 +33,6 @@ npm install
 npm run dev
 ```
 
-Открыть: http://localhost:5173/spendy-pwa/
-
 > **Важно:** в dev-режиме Service Worker не регистрируется. Баннер обновления и установка на телефон не работают.
 
 ## Проверка PWA-функций локально
@@ -45,10 +43,8 @@ npm run dev
 npm run build && npm run preview
 ```
 
-Открыть: http://localhost:4173/spendy-pwa/
-
 ## Деплой
 
 Пуш в ветку `main` автоматически запускает деплой на GitHub Pages через GitHub Actions.
 
-Приложение доступно по адресу: `https://ivan-legostin.github.io/spendy-pwa/`
+Приложение доступно по адресу: https://ivan-legostin.github.io/spendy-pwa/
