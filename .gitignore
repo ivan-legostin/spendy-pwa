@@ -1,0 +1,11 @@
+node_modules
+dist
+*.tsbuildinfo
+.DS_Store
+.idea
+
+# Generated PWA icons (created by postinstall via pwa-assets-generator)
+public/pwa-*.png
+public/maskable-icon-*.png
+public/apple-touch-icon-*.png
+public/favicon-48x48.png
