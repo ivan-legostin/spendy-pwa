@@ -1,0 +1,152 @@
+.home {
+  padding: 20px 16px 32px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.summary-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f1f5f9;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 28px;
+}
+
+.summary-card__amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-card__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-card__row--mt {
+  margin-top: 12px;
+}
+
+.summary-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.summary-card__dot--income {
+  background: #AAD4A1;
+}
+
+.summary-card__dot--spent {
+  background: #F4A89A;
+}
+
+.summary-card__label {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.summary-card__value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.home__transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.home__transactions-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.home__see-all {
+  background: transparent;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+}
+
+.transaction-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.transaction-item:last-child {
+  border-bottom: none;
+}
+
+.transaction-item__icon {
+  width: 52px;
+  height: 52px;
+  color: #6b7280;
+  border: 2px solid #6b7280;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.transaction-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.transaction-item__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.transaction-item__category {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.transaction-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.transaction-item__amount {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.transaction-item__amount--income {
+  color: #AAD4A1;
+}
+
+.transaction-item__amount--expense {
+  color: #F4A89A;
+}
+
+.transaction-item__date {
+  font-size: 13px;
+  color: #94a3b8;
+}

@@ -6,6 +6,9 @@ import { saveTransactions } from '../dao/service/TransactionDaoService.ts';
 import { parseCsv } from '../utils/CsvParser';
 import './SettingsScreen.css';
 
+/**
+ * Экран настроек приложения.
+ */
 export default function SettingsScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
