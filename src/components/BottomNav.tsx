@@ -7,16 +7,16 @@ export default function BottomNav() {
     <nav className="bottom-nav">
       <NavLink to="/" className="bottom-nav__link">
         <Home size={30} />
-        <span>Home</span>
+        <span>Главная</span>
       </NavLink>
 
-      <NavLink to="/add" className="bottom-nav__fab">
+      <NavLink to="/add" className="bottom-nav__fab" aria-label="Добавить транзакцию">
         <Plus size={30} strokeWidth={1.5} />
       </NavLink>
 
       <NavLink to="/settings" className="bottom-nav__link">
         <Settings size={30} />
-        <span>Settings</span>
+        <span>Настройки</span>
       </NavLink>
     </nav>
   )
