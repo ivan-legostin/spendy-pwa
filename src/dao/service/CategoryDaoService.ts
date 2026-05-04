@@ -1,4 +1,4 @@
-import { Category } from '../../models/Category.ts';
+import { Category } from '../models/Category.ts';
 import { getConnection } from '../ConnectionManager.ts';
 
 /**

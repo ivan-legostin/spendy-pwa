@@ -1,4 +1,4 @@
-import { TransactionType } from './TransactionType';
+import { TransactionType } from './TransactionType.ts';
 
 /**
  * Категория транзакции.

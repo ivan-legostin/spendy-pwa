@@ -1,4 +1,4 @@
-import { Transaction } from '../../models/Transaction.ts';
+import { Transaction } from '../models/Transaction.ts';
 import { getConnection } from '../ConnectionManager.ts';
 
 /**

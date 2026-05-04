@@ -1,6 +1,6 @@
-import { Category } from '../models/Category';
-import { Transaction } from '../models/Transaction';
-import { TransactionType } from '../models/TransactionType';
+import { Category } from '../dao/models/Category';
+import { Transaction } from '../dao/models/Transaction';
+import { TransactionType } from '../dao/models/TransactionType';
 
 export interface CsvParseResult {
   transactions: Transaction[];

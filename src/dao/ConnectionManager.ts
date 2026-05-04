@@ -1,7 +1,7 @@
 import { openDB, IDBPDatabase } from 'idb';
-import { Category } from '../models/Category';
-import { Transaction } from '../models/Transaction';
-import { TransactionType } from '../models/TransactionType';
+import { Category } from './models/Category';
+import { Transaction } from './models/Transaction';
+import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
 const DB_VERSION = 1;
