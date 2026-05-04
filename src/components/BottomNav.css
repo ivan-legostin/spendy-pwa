@@ -5,7 +5,7 @@
   right: 0;
   display: flex;
   align-items: center;
-  background: radial-gradient(circle 43px at 50% 0%, transparent 43px, #ffffff 33px);
+  background: radial-gradient(circle 43px at 50% 0%, transparent 43px, #0f172a 33px);
   filter: drop-shadow(0 -2px 8px rgba(0, 0, 0, 0.12));
   padding: 8px 16px 24px;
   -webkit-tap-highlight-color: transparent;
@@ -37,7 +37,7 @@
 }
 
 .bottom-nav__link.active svg {
-  color: #AAD4A1;
+  color: #4ade80;
 }
 
 .bottom-nav__fab {
@@ -47,7 +47,7 @@
   width: 70px;
   height: 70px;
   border-radius: 100%;
-  background: #AAD4A1;
+  background: #4ade80;
   border: none;
   cursor: pointer;
   margin-top: -60px;

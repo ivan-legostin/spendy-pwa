@@ -9,8 +9,8 @@ import { getAllTransactions } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
 import './HomeScreen.css'
 
-const INCOME_COLOR = '#AAD4A1'
-const EXPENSE_COLOR = '#F4A89A'
+const INCOME_COLOR = '#4ade80'
+const EXPENSE_COLOR = '#f87171'
 
 function formatAmount(amount: number, type: TransactionType): string {
   const formatted = amount.toLocaleString('ru-RU')

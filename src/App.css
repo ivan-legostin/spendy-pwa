@@ -6,7 +6,8 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  color: #1e293b;
+  background: #0f172a;
+  color: #f8fafc;
 }
 
 .app {
