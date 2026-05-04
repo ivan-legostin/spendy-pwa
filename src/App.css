@@ -6,22 +6,18 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: #f8fafc;
   color: #1e293b;
 }
 
 .app {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   min-height: 100dvh;
-  gap: 12px;
 }
 
-.app h1 {
-  font-size: 2.5rem;
-  color: #AAD4A1;
+main {
+  flex: 1;
+  width: 100%;
 }
 
 .update-banner {
@@ -49,8 +45,4 @@ body {
   cursor: pointer;
   font-size: 0.875rem;
   font-weight: 500;
-}
-
-.update-banner button:hover {
-  background: #4f46e5;
 }
