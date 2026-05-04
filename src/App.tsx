@@ -1,4 +1,9 @@
+import { Routes, Route } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import BottomNav from './components/BottomNav'
+import HomeScreen from './screens/HomeScreen'
+import AddScreen from './screens/AddScreen'
+import SettingsScreen from './screens/SettingsScreen'
 
 export default function App() {
   const {
@@ -8,8 +13,15 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>Spendy</h1>
-      <p>Hello World!!</p>
+      <main>
+        <Routes>
+          <Route path="/" element={<HomeScreen />} />
+          <Route path="/add" element={<AddScreen />} />
+          <Route path="/settings" element={<SettingsScreen />} />
+        </Routes>
+      </main>
+
+      <BottomNav />
 
       {needRefresh && (
         <div className="update-banner">

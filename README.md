@@ -11,8 +11,11 @@ spendy-pwa/
 │   ├── favicon.ico             # Фавиконка браузера
 │   └── .nojekyll               # Отключает Jekyll на GitHub Pages (нужен для папок с _)
 ├── src/
-│   ├── main.tsx                # Точка входа React
-│   ├── App.tsx                 # Корневой компонент, баннер обновления PWA
+│   ├── screens/                # Экраны приложения
+│   ├── components/             # Переиспользуемые UI-компоненты
+│   ├── models/                 # Типы данных (Transaction, Category, ...)
+│   ├── main.tsx                # Точка входа React, провайдеры (BrowserRouter)
+│   ├── App.tsx                 # Корневой компонент: маршруты, баннер обновления PWA
 │   ├── App.css                 # Стили
 │   └── vite-env.d.ts           # Типы Vite и vite-plugin-pwa
 ├── index.html                  # HTML-шаблон

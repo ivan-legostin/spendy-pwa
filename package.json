@@ -10,14 +10,16 @@
     "postinstall": "pwa-assets-generator"
   },
   "dependencies": {
+    "lucide-react": "^1.14.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.14.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
     "@vite-pwa/assets-generator": "^0.2.6",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.6.2",
     "vite": "^5.4.21",
     "vite-plugin-pwa": "^0.21.1"
