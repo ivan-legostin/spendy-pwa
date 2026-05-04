@@ -27,7 +27,15 @@
   z-index: 1;
 }
 
-.bottom-nav__link.active {
+.bottom-nav__link svg {
+  transition: transform 0.1s ease;
+}
+
+.bottom-nav__link:active svg {
+  transform: scale(0.85);
+}
+
+.bottom-nav__link.active svg {
   color: #AAD4A1;
 }
 
@@ -44,4 +52,9 @@
   margin-top: -60px;
   color: #000000;
   text-decoration: none;
+  transition: transform 0.1s ease;
+}
+
+.bottom-nav__fab:active {
+  transform: scale(0.9);
 }

@@ -6,7 +6,7 @@ export default function BottomNav() {
   return (
     <nav className="bottom-nav">
       <NavLink to="/" className="bottom-nav__link">
-        <Home size={24} />
+        <Home size={30} />
         <span>Home</span>
       </NavLink>
 
@@ -15,7 +15,7 @@ export default function BottomNav() {
       </NavLink>
 
       <NavLink to="/settings" className="bottom-nav__link">
-        <Settings size={24} />
+        <Settings size={30} />
         <span>Settings</span>
       </NavLink>
     </nav>
