@@ -4,10 +4,9 @@
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-around;
   align-items: center;
-  background: #ffffff;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  background: radial-gradient(circle 41px at 50% 0%, transparent 41px, #ffffff 33px);
+  filter: drop-shadow(0 -2px 8px rgba(0, 0, 0, 0.12));
   padding: 8px 16px 24px;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
@@ -15,13 +14,17 @@
 
 
 .bottom-nav__link {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   text-decoration: none;
   color: #9ca3af;
   font-size: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .bottom-nav__link.active {
@@ -32,14 +35,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   border-radius: 100%;
   background: #AAD4A1;
   border: none;
   cursor: pointer;
-  margin-top: -32px;
+  margin-top: -60px;
   color: #000000;
   text-decoration: none;
-  box-shadow: 0 0 0 6px #ffffff;
 }

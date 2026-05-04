@@ -11,7 +11,7 @@ export default function BottomNav() {
       </NavLink>
 
       <NavLink to="/add" className="bottom-nav__fab">
-        <Plus size={22} strokeWidth={2} />
+        <Plus size={30} strokeWidth={1.5} />
       </NavLink>
 
       <NavLink to="/settings" className="bottom-nav__link">
