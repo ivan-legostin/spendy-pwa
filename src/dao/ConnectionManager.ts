@@ -1,5 +1,6 @@
 import { openDB, IDBPDatabase } from 'idb';
 import { Category } from '../models/Category';
+import { Transaction } from '../models/Transaction';
 import { TransactionType } from '../models/TransactionType';
 
 const DB_NAME = 'spendy-db';
@@ -20,6 +21,13 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: crypto.randomUUID(), title: 'Инвестиции',  icon: 'briefcase.fill',                      type: TransactionType.income,  priority: 1, colorHex: '#5AC8FA' },
 ];
 
+const DEFAULT_TRANSACTIONS: Transaction[] = [
+  { id: crypto.randomUUID(), title: 'Продукты',        amount: 18500,  date: '2026-05-03', categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Такси',           amount: 4200,   date: '2026-05-02', categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Зарплата',        amount: 95000,  date: '2026-05-01', categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Дивиденды',       amount: 12500,  date: '2026-04-30', categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
+];
+
 /**
  * Инициализированное соединение.
  */
@@ -28,6 +36,11 @@ let connectionPromise: Promise<IDBPDatabase> | null = null;
 /**
  * Получить соединение с БД.
  *
+ * Перед установкой соединения проверяется наличие таблиц в БД и их генерация в случае отсутствия.
+ * Таблицы наполняются данными:
+ *   1. Стандартные категории.
+ *   2. Фейковые транзакции.
+ *
  * @returns promise, завершающийся единственным экземпляром соединения с БД.
  */
 export function getConnection(): Promise<IDBPDatabase> {
@@ -35,7 +48,8 @@ export function getConnection(): Promise<IDBPDatabase> {
     connectionPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(connection) {
         if (!connection.objectStoreNames.contains('transactions')) {
-          connection.createObjectStore('transactions', { keyPath: 'id' });
+          const txStore = connection.createObjectStore('transactions', { keyPath: 'id' });
+          DEFAULT_TRANSACTIONS.forEach(tx => txStore.add(tx));
         }
 
         if (!connection.objectStoreNames.contains('categories')) {

@@ -14,6 +14,8 @@ spendy-pwa/
 │   ├── screens/                # Экраны приложения
 │   ├── components/             # Переиспользуемые UI-компоненты
 │   ├── models/                 # Типы данных (Transaction, Category, ...)
+│   ├── dao/                    # Слой работы с IndexedDB
+│   │   └── service/            # CRUD-операции по сущностям
 │   ├── main.tsx                # Точка входа React, провайдеры (BrowserRouter)
 │   ├── App.tsx                 # Корневой компонент: маршруты, баннер обновления PWA
 │   ├── App.css                 # Стили
