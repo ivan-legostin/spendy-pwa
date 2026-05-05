@@ -4,57 +4,38 @@
   margin: 0 auto;
 }
 
+.home__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-bottom: 20px;
+}
+
 .summary-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  border-radius: 20px;
-  padding: 24px;
+  gap: 12px;
   margin-bottom: 28px;
-  box-shadow: 0 8px 24px rgba(30, 41, 59, 0.25);
 }
 
-.summary-card__amounts {
+.summary-card__tile {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  background: #2c2c2e;
+  border-radius: 20px;
+  padding: 20px 16px;
 }
 
-.summary-card__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.summary-card__row--mt {
-  margin-top: 12px;
-}
-
-.summary-card__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.summary-card__dot--income {
-  background: #4ade80;
-}
-
-.summary-card__dot--spent {
-  background: #f87171;
+.summary-card__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #f8fafc;
 }
 
 .summary-card__label {
   font-size: 14px;
-  color: #94a3b8;
-}
-
-.summary-card__value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #f8fafc;
+  color: #8e8e93;
 }
 
 .home__transactions-header {
@@ -84,20 +65,18 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid #1e293b;
-}
-
-.transaction-item:last-child {
-  border-bottom: none;
+  padding: 16px;
+  background: #1c1c1e;
+  border-radius: 16px;
+  margin-bottom: 10px;
 }
 
 .transaction-item__icon {
-  width: 52px;
-  height: 52px;
-  color: #6b7280;
-  border: 2px solid #6b7280;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  color: #ffffff;
+  background: #2D7FF9;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -144,7 +123,7 @@
 }
 
 .transaction-item__amount--expense {
-  color: #f87171;
+  color: #f8fafc;
 }
 
 .transaction-item__date {

@@ -6,7 +6,7 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
-  background: #0f172a;
+  background: #000000;
   color: #f8fafc;
 }
 
@@ -29,11 +29,11 @@ main {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #1e293b;
+  background: #1a1a1a;
   color: #f8fafc;
   padding: 12px 20px;
   border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   white-space: nowrap;
 }
 

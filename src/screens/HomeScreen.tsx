@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { PieChart, Pie } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
@@ -8,9 +7,6 @@ import { TransactionType } from '../dao/models/TransactionType'
 import { getAllTransactions } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
 import './HomeScreen.css'
-
-const INCOME_COLOR = '#4ade80'
-const EXPENSE_COLOR = '#f87171'
 
 function formatAmount(amount: number, type: TransactionType): string {
   const formatted = amount.toLocaleString('ru-RU')
@@ -27,31 +23,18 @@ function formatDate(dateStr: string): string {
  * Элемент с суммой расходов и доходов.
  * @param income сумма доходов.
  * @param spent сумма расходов.
- * @constructor
  */
 function SummaryCard({ income, spent }: Readonly<{ income: number; spent: number }>) {
-  const data = [
-    { value: income || 0.001, fill: INCOME_COLOR },
-    { value: spent || 0.001, fill: EXPENSE_COLOR },
-  ]
-
   return (
     <div className="summary-card">
-      <div className="summary-card__amounts">
-        <div className="summary-card__row">
-          <span className="summary-card__dot summary-card__dot--income" />
-          <span className="summary-card__label">Доходы</span>
-        </div>
-        <span className="summary-card__value">{income.toLocaleString('ru-RU')} ₽</span>
-        <div className="summary-card__row summary-card__row--mt">
-          <span className="summary-card__dot summary-card__dot--spent" />
-          <span className="summary-card__label">Расходы</span>
-        </div>
+      <div className="summary-card__tile">
         <span className="summary-card__value">{spent.toLocaleString('ru-RU')} ₽</span>
+        <span className="summary-card__label">Траты</span>
       </div>
-      <PieChart width={120} height={120}>
-        <Pie data={data} cx={55} cy={55} innerRadius={32} outerRadius={52} dataKey="value" strokeWidth={0} />
-      </PieChart>
+      <div className="summary-card__tile">
+        <span className="summary-card__value">{income.toLocaleString('ru-RU')} ₽</span>
+        <span className="summary-card__label">Доходы</span>
+      </div>
     </div>
   )
 }
@@ -113,6 +96,7 @@ export default function HomeScreen() {
 
   return (
     <div className="home">
+      <h1 className="home__title">Главная</h1>
       <SummaryCard income={totalIncome} spent={totalSpent} />
       <div className="home__transactions">
         <div className="home__transactions-header">

@@ -5,8 +5,8 @@
   right: 0;
   display: flex;
   align-items: center;
-  background: radial-gradient(circle 43px at 50% 0%, transparent 43px, #0f172a 33px);
-  filter: drop-shadow(0 -2px 8px rgba(0, 0, 0, 0.12));
+  background: radial-gradient(circle 46px at 50% 0%, transparent 46px, #1c1c1e 33px);
+  filter: drop-shadow(0 -2px 8px rgba(0, 0, 0, 0.4));
   padding: 8px 16px 24px;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
@@ -37,7 +37,7 @@
 }
 
 .bottom-nav__link.active svg {
-  color: #4ade80;
+  color: #2D7FF9;
 }
 
 .bottom-nav__fab {
@@ -47,11 +47,11 @@
   width: 70px;
   height: 70px;
   border-radius: 100%;
-  background: #4ade80;
+  background: #2D7FF9;
   border: none;
   cursor: pointer;
   margin-top: -60px;
-  color: #000000;
+  color: #ffffff;
   text-decoration: none;
   transition: transform 0.1s ease;
 }
