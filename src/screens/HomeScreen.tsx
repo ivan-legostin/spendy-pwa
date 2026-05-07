@@ -71,13 +71,26 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
   categoryMap: Map<string, Category>
   onClose: () => void
 }>) {
+  const [isClosing, setIsClosing] = useState(false)
   const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
 
+  const handleClose = () => setIsClosing(true)
+
+  const handleAnimationEnd = () => {
+    if (isClosing) onClose()
+  }
+
   return (
-    <dialog open aria-label="Все операции" className="all-tx-sheet" onClose={onClose}>
+    <dialog
+      open
+      aria-label="Все операции"
+      className={`all-tx-sheet${isClosing ? ' all-tx-sheet--closing' : ''}`}
+      onClose={handleClose}
+      onAnimationEnd={handleAnimationEnd}
+    >
       <div className="all-tx-sheet__header">
         <span className="all-tx-sheet__title">Все операции</span>
-        <button className="all-tx-sheet__close" onClick={onClose}>✕</button>
+        <button className="all-tx-sheet__close" onClick={handleClose}>✕</button>
       </div>
       <div className="all-tx-sheet__list">
         {sorted.map(tx => (
