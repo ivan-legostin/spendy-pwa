@@ -38,6 +38,7 @@
 
 .bottom-nav__link.active svg {
   color: #2D7FF9;
+  transform: scale(1.2);
 }
 
 .bottom-nav__link.active .bottom-nav__fab-icon svg {
@@ -53,4 +54,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.bottom-nav__link.active .bottom-nav__fab-icon {
+  transform: scale(1.2);
+}
+
+.bottom-nav__link.pressing svg {
+  transform: scale(0.85);
+}
+
+.bottom-nav__link.pressing .bottom-nav__fab-icon {
+  transform: scale(0.85);
 }
