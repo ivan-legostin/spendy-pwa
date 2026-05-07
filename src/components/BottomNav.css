@@ -5,8 +5,8 @@
   right: 0;
   display: flex;
   align-items: center;
-  background: radial-gradient(circle 46px at 50% 0%, transparent 46px, #1c1c1e 33px);
-  filter: drop-shadow(0 -2px 8px rgba(0, 0, 0, 0.4));
+  background: #1c1c1e;
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08);
   padding: 8px 16px 24px;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
@@ -40,22 +40,17 @@
   color: #2D7FF9;
 }
 
-.bottom-nav__fab {
+.bottom-nav__link.active .bottom-nav__fab-icon svg {
+  color: #ffffff;
+}
+
+.bottom-nav__fab-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #2D7FF9;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 70px;
-  height: 70px;
-  border-radius: 100%;
-  background: #2D7FF9;
-  border: none;
-  cursor: pointer;
-  margin-top: -60px;
-  color: #ffffff;
-  text-decoration: none;
-  transition: transform 0.1s ease;
-}
-
-.bottom-nav__fab:active {
-  transform: scale(0.9);
 }
