@@ -162,7 +162,7 @@
 }
 
 .all-tx-sheet--closing {
-  animation: slide-down 0.3s ease;
+  animation: slide-down 0.3s ease forwards;
 }
 
 .all-tx-sheet__header {
