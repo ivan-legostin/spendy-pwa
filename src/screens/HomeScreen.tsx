@@ -14,8 +14,8 @@ function formatAmount(amount: number, type: TransactionType): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    month: 'short', day: '2-digit', year: 'numeric',
+  return new Date(dateStr).toLocaleDateString('ru-RU', {
+    day: 'numeric', month: 'long',
   })
 }
 
@@ -55,8 +55,8 @@ function TransactionItem({ transaction, category }: Readonly<{ transaction: Tran
         <Icon size={24}/>
       </div>
       <div className="transaction-item__info">
-        <span className="transaction-item__title">{transaction.title}</span>
-        <span className="transaction-item__category">{category?.title ?? '—'}</span>
+        <span className="transaction-item__title">{category?.title ?? '—'}</span>
+        <span className="transaction-item__category">{transaction.note}</span>
       </div>
       <div className="transaction-item__right">
         <span className={`transaction-item__amount transaction-item__amount--${type}`}>{formatAmount(transaction.amount, type)}</span>
@@ -66,12 +66,35 @@ function TransactionItem({ transaction, category }: Readonly<{ transaction: Tran
   )
 }
 
+function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
+  transactions: Transaction[]
+  categoryMap: Map<string, Category>
+  onClose: () => void
+}>) {
+  const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
+
+  return (
+    <dialog open aria-label="Все операции" className="all-tx-sheet" onClose={onClose}>
+      <div className="all-tx-sheet__header">
+        <span className="all-tx-sheet__title">Все операции</span>
+        <button className="all-tx-sheet__close" onClick={onClose}>✕</button>
+      </div>
+      <div className="all-tx-sheet__list">
+        {sorted.map(tx => (
+          <TransactionItem key={tx.id} transaction={tx} category={categoryMap.get(tx.categoryId)} />
+        ))}
+      </div>
+    </dialog>
+  )
+}
+
 /**
  * Главный экран приложения.
  */
 export default function HomeScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [allTxOpen, setAllTxOpen] = useState(false)
 
   useEffect(() => {
     Promise.all([getAllTransactions(), getAllCategories()]).then(([txs, cats]) => {
@@ -93,7 +116,7 @@ export default function HomeScreen() {
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const recentTransactions = [...transactions]
+  const recentTransactions = [...currentMonthTx]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
@@ -104,12 +127,20 @@ export default function HomeScreen() {
       <div className="home__transactions">
         <div className="home__transactions-header">
           <h2 className="home__transactions-title">Операции</h2>
-          <button className="home__see-all">Все операции &gt;</button>
+          <button className="home__see-all" onClick={() => setAllTxOpen(true)}>Все операции &gt;</button>
         </div>
         {recentTransactions.map(tx => (
           <TransactionItem key={tx.id} transaction={tx} category={categoryMap.get(tx.categoryId)} />
         ))}
       </div>
+
+      {allTxOpen && (
+        <AllTransactionsSheet
+          transactions={currentMonthTx}
+          categoryMap={categoryMap}
+          onClose={() => setAllTxOpen(false)}
+        />
+      )}
     </div>
   )
 }
