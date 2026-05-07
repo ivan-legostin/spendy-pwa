@@ -58,11 +58,10 @@
   align-items: center;
   gap: 6px;
   background: transparent;
-  border: 2px solid transparent;
+  border: none;
   border-radius: 16px;
   padding: 10px 4px;
   cursor: pointer;
-  transition: border-color 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 

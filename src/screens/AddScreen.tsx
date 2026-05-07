@@ -188,12 +188,11 @@ export default function AddScreen() {
               <button
                 key={cat.id}
                 className={`category-item${isSelected ? ' category-item--selected' : ''}`}
-                style={isSelected ? { borderColor: cat.colorHex } : undefined}
                 onClick={() => setSelectedCategory(cat)}
               >
                 <div
                   className="category-item__icon"
-                  style={{ background: isSelected ? cat.colorHex : '#2c2c2e' }}
+                  style={{ background: isSelected ? '#2D7FF9' : '#2c2c2e' }}
                 >
                   <Icon size={22} color={isSelected ? '#fff' : '#94a3b8'} />
                 </div>
