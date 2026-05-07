@@ -22,3 +22,13 @@ export async function getAllTransactions(): Promise<Transaction[]> {
   const connection = await getConnection();
   return connection.getAll('transactions');
 }
+
+/**
+ * Удалить все транзакции из БД.
+ *
+ * @returns promise, завершающийся после очистки хранилища.
+ */
+export async function clearTransactions(): Promise<void> {
+  const connection = await getConnection();
+  await connection.clear('transactions');
+}

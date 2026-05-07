@@ -82,11 +82,14 @@ export default function HomeScreen() {
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
 
-  const totalIncome = transactions
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const currentMonthTx = transactions.filter(tx => tx.date.startsWith(currentMonth))
+
+  const totalIncome = currentMonthTx
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.income)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const totalSpent = transactions
+  const totalSpent = currentMonthTx
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 

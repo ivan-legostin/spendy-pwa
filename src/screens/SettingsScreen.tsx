@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import {Download} from 'lucide-react';
 import { getAllCategories } from '../dao/service/CategoryDaoService';
 import { saveCategories } from '../dao/service/CategoryDaoService.ts';
-import { saveTransactions } from '../dao/service/TransactionDaoService.ts';
+import { saveTransactions, clearTransactions } from '../dao/service/TransactionDaoService.ts';
 import { parseCsv } from '../utils/CsvParser';
 import './SettingsScreen.css';
 
@@ -22,6 +22,7 @@ export default function SettingsScreen() {
       const text = e.target?.result as string;
       const existingCategories = await getAllCategories();
       const { transactions, categories } = parseCsv(text, existingCategories);
+      await clearTransactions();
       await saveCategories(categories);
       await saveTransactions(transactions);
       setStatus(`Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`);
