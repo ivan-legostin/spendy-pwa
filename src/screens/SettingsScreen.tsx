@@ -1,10 +1,34 @@
 import React, { useRef, useState } from 'react';
-import {Download} from 'lucide-react';
+import { Download } from 'lucide-react';
 import { getAllCategories } from '../dao/service/CategoryDaoService';
 import { saveCategories } from '../dao/service/CategoryDaoService.ts';
 import { saveTransactions, clearTransactions } from '../dao/service/TransactionDaoService.ts';
 import { parseCsv } from '../utils/CsvParser';
 import './SettingsScreen.css';
+
+function ImportDialog({ onReplace, onAppend, onCancel }: Readonly<{
+  onReplace: () => void
+  onAppend: () => void
+  onCancel: () => void
+}>) {
+  return (
+    <dialog open aria-label="Импорт транзакций" className="import-dialog" onClose={onCancel}>
+      <h2 className="import-dialog__title">Импорт транзакций</h2>
+      <p className="import-dialog__body">Что сделать с текущими транзакциями?</p>
+      <div className="import-dialog__actions">
+        <button className="import-dialog__btn import-dialog__btn--danger" onClick={onReplace}>
+          Заменить
+        </button>
+        <button className="import-dialog__btn import-dialog__btn--primary" onClick={onAppend}>
+          Добавить к существующим
+        </button>
+        <button className="import-dialog__btn import-dialog__btn--cancel" onClick={onCancel}>
+          Отмена
+        </button>
+      </div>
+    </dialog>
+  )
+}
 
 /**
  * Экран настроек приложения.
@@ -12,22 +36,24 @@ import './SettingsScreen.css';
 export default function SettingsScreen() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    setPendingFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const existingCategories = await getAllCategories();
-      const { transactions, categories } = parseCsv(text, existingCategories);
-      await clearTransactions();
-      await saveCategories(categories);
-      await saveTransactions(transactions);
-      setStatus(`Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`);
-    };
-    reader.readAsText(file, 'utf-8');
+  async function processImport(file: File, replace: boolean) {
+    setPendingFile(null);
+    const text = await file.text();
+    const existingCategories = await getAllCategories();
+    const { transactions, categories } = parseCsv(text, existingCategories);
+    if (replace) await clearTransactions();
+    await saveCategories(categories);
+    await saveTransactions(transactions);
+    setStatus(`Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`);
   }
 
   return (
@@ -52,6 +78,14 @@ export default function SettingsScreen() {
         </button>
       </div>
       {status && <p className="settings__status">{status}</p>}
+
+      {pendingFile && (
+        <ImportDialog
+          onReplace={() => processImport(pendingFile, true)}
+          onAppend={() => processImport(pendingFile, false)}
+          onCancel={() => setPendingFile(null)}
+        />
+      )}
     </div>
   );
 }
