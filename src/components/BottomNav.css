@@ -32,9 +32,6 @@
   transition: transform 0.1s ease, filter 0.1s ease;
 }
 
-.bottom-nav__link:active svg {
-  transform: scale(0.85);
-}
 
 .bottom-nav__link.active svg {
   color: #2D7FF9;
@@ -63,10 +60,3 @@
   box-shadow: 0 0 10px #2D7FF9;
 }
 
-.bottom-nav__link.pressing svg {
-  transform: scale(0.85);
-}
-
-.bottom-nav__link.pressing .bottom-nav__fab-icon {
-  transform: scale(0.85);
-}
