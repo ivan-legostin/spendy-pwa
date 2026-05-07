@@ -29,7 +29,7 @@
 }
 
 .bottom-nav__link svg {
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, filter 0.1s ease;
 }
 
 .bottom-nav__link:active svg {
@@ -39,6 +39,7 @@
 .bottom-nav__link.active svg {
   color: #2D7FF9;
   transform: scale(1.2);
+  filter: drop-shadow(0 0 6px #2D7FF9);
 }
 
 .bottom-nav__link.active .bottom-nav__fab-icon svg {
@@ -59,6 +60,7 @@
 
 .bottom-nav__link.active .bottom-nav__fab-icon {
   transform: scale(1.2);
+  box-shadow: 0 0 10px #2D7FF9;
 }
 
 .bottom-nav__link.pressing svg {
