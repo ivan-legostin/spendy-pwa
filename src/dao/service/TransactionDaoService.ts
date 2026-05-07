@@ -24,6 +24,20 @@ export async function getAllTransactions(): Promise<Transaction[]> {
 }
 
 /**
+ * Получить транзакции за указанный месяц из БД.
+ *
+ * @param year год.
+ * @param month номер месяца (1–12).
+ * @returns promise, завершающийся списком транзакций за месяц.
+ */
+export async function getTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
+  const mm = String(month).padStart(2, '0');
+  const range = IDBKeyRange.bound(`${year}-${mm}-01`, `${year}-${mm}-31`);
+  const connection = await getConnection();
+  return connection.getAllFromIndex('transactions', 'date', range);
+}
+
+/**
  * Удалить все транзакции из БД.
  *
  * @returns promise, завершающийся после очистки хранилища.

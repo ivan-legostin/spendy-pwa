@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
-import { getAllTransactions } from '../dao/service/TransactionDaoService'
+import { getTransactionsByMonth } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
 import './HomeScreen.css'
 
@@ -97,7 +97,11 @@ export default function HomeScreen() {
   const [allTxOpen, setAllTxOpen] = useState(false)
 
   useEffect(() => {
-    Promise.all([getAllTransactions(), getAllCategories()]).then(([txs, cats]) => {
+    const now = new Date()
+    Promise.all([
+      getTransactionsByMonth(now.getFullYear(), now.getMonth() + 1),
+      getAllCategories(),
+    ]).then(([txs, cats]) => {
       setTransactions(txs)
       setCategories(cats)
     })
@@ -105,18 +109,15 @@ export default function HomeScreen() {
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
 
-  const currentMonth = new Date().toISOString().slice(0, 7)
-  const currentMonthTx = transactions.filter(tx => tx.date.startsWith(currentMonth))
-
-  const totalIncome = currentMonthTx
+  const totalIncome = transactions
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.income)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const totalSpent = currentMonthTx
+  const totalSpent = transactions
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const recentTransactions = [...currentMonthTx]
+  const recentTransactions = [...transactions]
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
@@ -136,7 +137,7 @@ export default function HomeScreen() {
 
       {allTxOpen && (
         <AllTransactionsSheet
-          transactions={currentMonthTx}
+          transactions={transactions}
           categoryMap={categoryMap}
           onClose={() => setAllTxOpen(false)}
         />

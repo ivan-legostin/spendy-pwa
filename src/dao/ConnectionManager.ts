@@ -4,7 +4,7 @@ import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const DEFAULT_CATEGORIES: Category[] = [
   // Категории расходов
@@ -46,9 +46,10 @@ let connectionPromise: Promise<IDBPDatabase> | null = null;
 export function getConnection(): Promise<IDBPDatabase> {
   if (!connectionPromise) {
     connectionPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(connection, oldVersion) {
+      upgrade(connection, oldVersion, _, transaction) {
         if (oldVersion < 1) {
           const txStore = connection.createObjectStore('transactions', { keyPath: 'id' });
+          txStore.createIndex('date', 'date');
           DEFAULT_TRANSACTIONS.forEach(tx => txStore.add(tx));
           const catStore = connection.createObjectStore('categories', { keyPath: 'id' });
           DEFAULT_CATEGORIES.forEach(cat => catStore.add(cat));
@@ -58,6 +59,10 @@ export function getConnection(): Promise<IDBPDatabase> {
           connection.deleteObjectStore('categories');
           const catStore = connection.createObjectStore('categories', { keyPath: 'id' });
           DEFAULT_CATEGORIES.forEach(cat => catStore.add(cat));
+        }
+
+        if (oldVersion === 2) {
+          transaction.objectStore('transactions').createIndex('date', 'date');
         }
       },
     });
