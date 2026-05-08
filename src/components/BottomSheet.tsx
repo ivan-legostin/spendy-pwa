@@ -20,6 +20,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
   ref
 ) {
   const [isClosing, setIsClosing] = useState(false)
+  const [isBackdropClosing, setIsBackdropClosing] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const dragState = useRef({ startY: 0, isDragging: false })
 
@@ -68,6 +69,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
     const dialog = dialogRef.current
     if (!dialog) return
     if (delta > 100) {
+      setIsBackdropClosing(true)
       dialog.style.transition = 'transform 0.3s ease'
       dialog.style.transform = 'translateY(100%)'
       setTimeout(() => onClose(), 300)
@@ -87,7 +89,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
 
   return (
     <>
-      {withBackdrop && <div aria-hidden="true" className={`bottom-sheet__backdrop${isClosing ? ' bottom-sheet__backdrop--closing' : ''}`} style={zIndex != null ? { zIndex: zIndex - 1 } : undefined} onClick={handleClose} />}
+      {withBackdrop && <div aria-hidden="true" className={`bottom-sheet__backdrop${(isClosing || isBackdropClosing) ? ' bottom-sheet__backdrop--closing' : ''}`} style={zIndex != null ? { zIndex: zIndex - 1 } : undefined} onClick={handleClose} />}
       <dialog
         ref={dialogRef}
         open
