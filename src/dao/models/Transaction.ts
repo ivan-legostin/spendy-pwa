@@ -15,7 +15,7 @@ export interface Transaction {
    */
   amount: number;
   /**
-   * Дата транзакции в формате YYYY-MM-DD.
+   * Дата транзакции в формате YYYY-MM-DDTHH:mm:ss.sssZ.
    */
   date: string;
   /**

@@ -4,7 +4,7 @@ import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 const DEFAULT_CATEGORIES: Category[] = [
   // Категории расходов
@@ -22,10 +22,10 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 const DEFAULT_TRANSACTIONS: Transaction[] = [
-  { id: crypto.randomUUID(), title: 'Продукты',  amount: 18500,  date: '2026-05-03', categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Такси',     amount: 4200,   date: '2026-05-02', categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Зарплата',  amount: 95000,  date: '2026-05-01', categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Дивиденды', amount: 12500,  date: '2026-04-30', categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Продукты',  amount: 18500,  date: '2026-05-03T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Такси',     amount: 4200,   date: '2026-05-02T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Зарплата',  amount: 95000,  date: '2026-05-01T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Дивиденды', amount: 12500,  date: '2026-04-30T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
 ];
 
 /**
@@ -46,7 +46,7 @@ let connectionPromise: Promise<IDBPDatabase> | null = null;
 export function getConnection(): Promise<IDBPDatabase> {
   if (!connectionPromise) {
     connectionPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(connection, oldVersion, _, transaction) {
+      async upgrade(connection, oldVersion, _, transaction) {
         if (oldVersion < 1) {
           const txStore = connection.createObjectStore('transactions', { keyPath: 'id' });
           txStore.createIndex('date', 'date');
@@ -63,6 +63,16 @@ export function getConnection(): Promise<IDBPDatabase> {
 
         if (oldVersion === 2) {
           transaction.objectStore('transactions').createIndex('date', 'date');
+        }
+
+        if (oldVersion < 4) {
+          const store = transaction.objectStore('transactions');
+          const all = await store.getAll();
+          for (const tx of all) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(tx.date)) {
+              await store.put({ ...tx, date: `${tx.date}T00:00:00.000Z` });
+            }
+          }
         }
       },
     });

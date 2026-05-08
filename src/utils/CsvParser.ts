@@ -33,7 +33,7 @@ function parseRow(line: string): string[] {
 
 function convertDate(dateStr: string): string {
   const [day, month, year] = dateStr.split('.');
-  return `${year}-${month}-${day}`;
+  return `${year}-${month}-${day}T00:00:00.000Z`;
 }
 
 /**

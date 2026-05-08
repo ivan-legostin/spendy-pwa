@@ -125,13 +125,13 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
 }>) {
   const sheetRef = useRef<BottomSheetHandle>(null)
   const [amount, setAmount] = useState(String(transaction.amount))
-  const [date, setDate] = useState(transaction.date)
+  const [date, setDate] = useState(transaction.date.slice(0, 10))
   const [categoryId, setCategoryId] = useState(transaction.categoryId)
   const [note, setNote] = useState(transaction.note)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const updated: Transaction = { ...transaction, amount: Number(amount), date, categoryId, note }
+    const updated: Transaction = { ...transaction, amount: Number(amount), date: `${date}T${transaction.date.slice(11) || '00:00:00.000Z'}`, categoryId, note }
     await updateTransaction(updated)
     onSave(updated)
   }
