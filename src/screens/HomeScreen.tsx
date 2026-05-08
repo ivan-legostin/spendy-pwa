@@ -60,7 +60,6 @@ function TransactionItem({ transaction, category }: Readonly<{ transaction: Tran
       </div>
       <div className="transaction-item__right">
         <span className={`transaction-item__amount transaction-item__amount--${type}`}>{formatAmount(transaction.amount, type)}</span>
-        <span className="transaction-item__date">{formatDate(transaction.date)}</span>
       </div>
     </div>
   )
@@ -75,9 +74,22 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
   const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
 
   const handleClose = () => setIsClosing(true)
+  const handleAnimationEnd = () => { if (isClosing) onClose() }
 
-  const handleAnimationEnd = () => {
-    if (isClosing) onClose()
+  const grouped = new Map<string, Transaction[]>()
+  for (const tx of sorted) {
+    const key = tx.date.slice(0, 10)
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(tx)
+  }
+
+  const formatDayTotal = (txs: Transaction[]) => {
+    const net = txs.reduce((sum, tx) => {
+      const type = categoryMap.get(tx.categoryId)?.type ?? TransactionType.expense
+      return type === TransactionType.income ? sum + tx.amount : sum - tx.amount
+    }, 0)
+    const sign = net >= 0 ? '+' : '−'
+    return `${sign}${Math.abs(net).toLocaleString('ru-RU')} ₽`
   }
 
   return (
@@ -89,12 +101,19 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
       onAnimationEnd={handleAnimationEnd}
     >
       <div className="all-tx-sheet__header">
-        <span className="all-tx-sheet__title">Все операции</span>
         <button className="all-tx-sheet__close" onClick={handleClose}>✕</button>
       </div>
       <div className="all-tx-sheet__list">
-        {sorted.map(tx => (
-          <TransactionItem key={tx.id} transaction={tx} category={categoryMap.get(tx.categoryId)} />
+        {[...grouped.entries()].map(([dateKey, txs]) => (
+          <div key={dateKey} className="tx-group">
+            <div className="tx-group__header">
+              <span className="tx-group__date">{formatDate(txs[0].date)}</span>
+              <span className="tx-group__total">{formatDayTotal(txs)}</span>
+            </div>
+            {txs.map(tx => (
+              <TransactionItem key={tx.id} transaction={tx} category={categoryMap.get(tx.categoryId)} />
+            ))}
+          </div>
         ))}
       </div>
     </dialog>

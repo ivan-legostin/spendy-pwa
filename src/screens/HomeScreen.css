@@ -126,11 +126,6 @@
   color: #f8fafc;
 }
 
-.transaction-item__date {
-  font-size: 13px;
-  color: #94a3b8;
-}
-
 @keyframes slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
@@ -173,12 +168,6 @@
   flex-shrink: 0;
 }
 
-.all-tx-sheet__title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #f8fafc;
-}
-
 .all-tx-sheet__close {
   background: #2c2c2e;
   border: none;
@@ -191,6 +180,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: auto;
 }
 
 .all-tx-sheet__list {
@@ -199,5 +189,33 @@
   padding: 0 16px 80px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+}
+
+.tx-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tx-group__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.tx-group__date {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.tx-group__total {
+  font-size: 15px;
+  color: #8e8e93;
+}
+
+.all-tx-sheet .transaction-item {
+  margin-bottom: 0;
 }
