@@ -132,7 +132,7 @@ export default function AddScreen() {
       id: crypto.randomUUID(),
       title: selectedCategory.title,
       amount: amountValue,
-      date: `${date}T${new Date().toISOString().slice(11)}`,
+      date: new Date(`${date}T${new Date().toISOString().slice(11)}`).getTime(),
       categoryId: selectedCategory.id,
       note,
     }])
