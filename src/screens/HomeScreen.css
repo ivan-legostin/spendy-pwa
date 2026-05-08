@@ -385,17 +385,34 @@
 
 /* Month Selector */
 .month-selector {
-  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #2c2c2e;
   border-radius: 10px;
-  padding: 6px 26px 6px 10px;
-  color: #94a3b8;
-  cursor: pointer;
-  font: inherit;
+  padding: 4px 6px;
+}
+
+.month-selector__label {
   font-size: 13px;
-  color-scheme: dark;
-  -webkit-appearance: none;
-  appearance: none;
-  background: #2c2c2e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;
+  color: #94a3b8;
+  min-width: 110px;
+  text-align: center;
+}
+
+.month-selector__arrow {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.month-selector__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 /* Category Breakdown Sheet */

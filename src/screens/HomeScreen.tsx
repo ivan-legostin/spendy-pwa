@@ -54,31 +54,27 @@ function MonthSelector({ year, month, onChange }: Readonly<{
   month: number
   onChange: (year: number, month: number) => void
 }>) {
-  const options: { year: number; month: number; label: string }[] = []
   const now = new Date()
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    options.push({
-      year: d.getFullYear(),
-      month: d.getMonth() + 1,
-      label: d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }),
-    })
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1
+
+  const label = new Date(year, month - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+
+  const handlePrev = () => {
+    if (month === 1) onChange(year - 1, 12)
+    else onChange(year, month - 1)
   }
+
+  const handleNext = () => {
+    if (month === 12) onChange(year + 1, 1)
+    else onChange(year, month + 1)
+  }
+
   return (
-    <select
-      className="month-selector"
-      value={`${year}-${month}`}
-      onChange={e => {
-        const [y, m] = e.target.value.split('-').map(Number)
-        onChange(y, m)
-      }}
-    >
-      {options.map(o => (
-        <option key={`${o.year}-${o.month}`} value={`${o.year}-${o.month}`}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <div className="month-selector">
+      <button type="button" className="month-selector__arrow" onClick={handlePrev}>‹</button>
+      <span className="month-selector__label">{label}</span>
+      <button type="button" className="month-selector__arrow" onClick={handleNext} disabled={isCurrentMonth}>›</button>
+    </div>
   )
 }
 
