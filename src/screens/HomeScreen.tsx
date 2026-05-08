@@ -209,7 +209,6 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
   onUpdated: (tx: Transaction) => void
 }>) {
   const [isEditing, setIsEditing] = useState(false)
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
 
   const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
   const type = category?.type ?? TransactionType.expense
@@ -242,23 +241,9 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
             <button className="tx-detail-sheet__btn tx-detail-sheet__btn--edit" onClick={() => setIsEditing(true)}>
               Редактировать
             </button>
-            {isConfirmingDelete ? (
-              <div className="tx-detail-sheet__confirm">
-                <span className="tx-detail-sheet__confirm-text">Удалить операцию?</span>
-                <div className="tx-detail-sheet__confirm-btns">
-                  <button className="tx-detail-sheet__btn tx-detail-sheet__btn--secondary" onClick={() => setIsConfirmingDelete(false)}>
-                    Отмена
-                  </button>
-                  <button className="tx-detail-sheet__btn tx-detail-sheet__btn--delete-confirm" onClick={handleDelete}>
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button className="tx-detail-sheet__btn tx-detail-sheet__btn--delete" onClick={() => setIsConfirmingDelete(true)}>
-                Удалить
-              </button>
-            )}
+            <button className="tx-detail-sheet__btn tx-detail-sheet__btn--delete" onClick={handleDelete}>
+              Удалить
+            </button>
           </div>
         </div>
       </BottomSheet>
