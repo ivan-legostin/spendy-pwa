@@ -123,15 +123,20 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
     dragState.current = { startY: e.touches[0].clientY, isDragging: true }
   }
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!dragState.current.isDragging) return
-    const delta = e.touches[0].clientY - dragState.current.startY
-    if (delta <= 0) return
+  useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    dialog.style.transition = 'none'
-    dialog.style.transform = `translateY(${delta}px)`
-  }
+    const onTouchMove = (e: TouchEvent) => {
+      if (!dragState.current.isDragging) return
+      const delta = e.touches[0].clientY - dragState.current.startY
+      if (delta <= 0) return
+      e.preventDefault()
+      dialog.style.transition = 'none'
+      dialog.style.transform = `translateY(${delta}px)`
+    }
+    dialog.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => dialog.removeEventListener('touchmove', onTouchMove)
+  }, [])
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (!dragState.current.isDragging) return
@@ -162,7 +167,6 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
       onClose={handleClose}
       onAnimationEnd={handleAnimationEnd}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchCancel}
     >
