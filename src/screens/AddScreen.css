@@ -72,12 +72,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, transform 0.15s, filter 0.15s;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .category-item--selected .category-item__icon {
   transform: scale(1.15);
-  filter: drop-shadow(0 0 8px #2D7FF9);
+  box-shadow: 0 0 0 1px rgba(45, 127, 249, 0.15), 0 0 16px 4px rgba(45, 127, 249, 0.7);
 }
 
 .category-item__title {
