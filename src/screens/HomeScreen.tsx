@@ -21,7 +21,6 @@ function formatDate(dateStr: string): string {
   })
 }
 
-const CHART_COLORS = ['#2D7FF9', '#4ade80', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
 
 /**
  * Элемент с суммой расходов и доходов.
@@ -400,11 +399,11 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
 
   const total = filtered.reduce((s, t) => s + t.amount, 0)
 
-  const chartData = groupedEntries.map(([catId, { category, txs }], i) => ({
+  const chartData = groupedEntries.map(([catId, { category, txs }]) => ({
     name: category?.title ?? '—',
     value: txs.reduce((s, t) => s + t.amount, 0),
     categoryId: catId,
-    fill: CHART_COLORS[i % CHART_COLORS.length],
+    fill: category?.colorHex ?? '#2D7FF9',
   }))
 
   const scrollToCategory = (categoryId: string) => {
@@ -417,7 +416,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
 
   const categoriesSection = (
     <div className="breakdown-sheet__categories">
-      {groupedEntries.map(([catId, { category, txs }], _) => {
+      {groupedEntries.map(([catId, { category, txs }]) => {
         const catTotal = txs.reduce((s, t) => s + t.amount, 0)
         const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
         return (
