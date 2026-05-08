@@ -183,6 +183,21 @@
   background: #2c2c2e;
 }
 
+/* Прозрачный оверлей — блокирует клики под шторкой без затемнения */
+.tx-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+}
+
+.tx-sheet-overlay--top {
+  z-index: 101;
+}
+
+.edit-tx-sheet {
+  z-index: 102;
+}
+
 /* Transaction Detail Sheet */
 .tx-detail-sheet__content {
   padding: 16px 16px 32px;
@@ -273,8 +288,8 @@
 
 .tx-detail-sheet__btn--delete {
   background: transparent;
-  border: 1.5px solid #ef4444;
-  color: #ef4444;
+  border: 1.5px solid #2D7FF9;
+  color: #2D7FF9;
 }
 
 .tx-detail-sheet__confirm {

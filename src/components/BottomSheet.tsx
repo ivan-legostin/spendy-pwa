@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import './BottomSheet.css'
 
 interface BottomSheetProps {
@@ -10,13 +10,22 @@ interface BottomSheetProps {
   children: React.ReactNode
 }
 
-export default function BottomSheet({ ariaLabel, onClose, scrollableRef, withBackdrop, className, children }: Readonly<BottomSheetProps>) {
+export interface BottomSheetHandle {
+  close: () => void
+}
+
+const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function BottomSheet(
+  { ariaLabel, onClose, scrollableRef, withBackdrop, className, children },
+  ref
+) {
   const [isClosing, setIsClosing] = useState(false)
   const dialogRef = useRef<HTMLDialogElement>(null)
   const dragState = useRef({ startY: 0, isDragging: false })
 
   const handleClose = () => setIsClosing(true)
   const handleAnimationEnd = () => { if (isClosing) onClose() }
+
+  useImperativeHandle(ref, () => ({ close: handleClose }))
 
   const snapBack = () => {
     const dialog = dialogRef.current
@@ -94,4 +103,6 @@ export default function BottomSheet({ ariaLabel, onClose, scrollableRef, withBac
       </dialog>
     </>
   )
-}
+})
+
+export default BottomSheet

@@ -6,7 +6,7 @@ import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
 import { getTransactionsByMonth, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
-import BottomSheet from '../components/BottomSheet'
+import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
 
 function formatAmount(amount: number, type: TransactionType): string {
@@ -81,6 +81,7 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
   onClose: () => void
   onSave: (tx: Transaction) => void
 }>) {
+  const sheetRef = useRef<BottomSheetHandle>(null)
   const [amount, setAmount] = useState(String(transaction.amount))
   const [date, setDate] = useState(transaction.date)
   const [categoryId, setCategoryId] = useState(transaction.categoryId)
@@ -94,7 +95,9 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
   }
 
   return (
-    <BottomSheet ariaLabel="Редактировать операцию" onClose={onClose} withBackdrop className="edit-tx-sheet">
+    <>
+      <div aria-hidden="true" className="tx-sheet-overlay tx-sheet-overlay--top" onClick={() => sheetRef.current?.close()} />
+      <BottomSheet ref={sheetRef} ariaLabel="Редактировать операцию" onClose={onClose} className="edit-tx-sheet">
       <form className="edit-tx-sheet__form" onSubmit={handleSubmit}>
         <h2 className="edit-tx-sheet__title">Редактировать</h2>
         <div className="edit-tx-sheet__field">
@@ -154,7 +157,8 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
           </button>
         </div>
       </form>
-    </BottomSheet>
+      </BottomSheet>
+    </>
   )
 }
 
@@ -166,6 +170,7 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
   onDeleted: (id: string) => void
   onUpdated: (tx: Transaction) => void
 }>) {
+  const sheetRef = useRef<BottomSheetHandle>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
 
@@ -180,7 +185,8 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
 
   return (
     <>
-      <BottomSheet ariaLabel="Детали операции" onClose={onClose} withBackdrop className="tx-detail-sheet">
+      <div aria-hidden="true" className="tx-sheet-overlay" onClick={() => sheetRef.current?.close()} />
+      <BottomSheet ref={sheetRef} ariaLabel="Детали операции" onClose={onClose} className="tx-detail-sheet">
         <div className="tx-detail-sheet__content">
           <div className="tx-detail-sheet__header">
             <div className="transaction-item__icon">
