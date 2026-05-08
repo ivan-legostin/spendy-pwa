@@ -191,11 +191,7 @@
 }
 
 .tx-sheet-overlay--top {
-  z-index: 101;
-}
-
-.edit-tx-sheet {
-  z-index: 102;
+  z-index: 103;
 }
 
 /* Transaction Detail Sheet */

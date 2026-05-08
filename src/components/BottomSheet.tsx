@@ -6,6 +6,7 @@ interface BottomSheetProps {
   onClose: () => void
   scrollableRef?: React.RefObject<HTMLElement>
   withBackdrop?: boolean
+  zIndex?: number
   className?: string
   children: React.ReactNode
 }
@@ -15,7 +16,7 @@ export interface BottomSheetHandle {
 }
 
 const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function BottomSheet(
-  { ariaLabel, onClose, scrollableRef, withBackdrop, className, children },
+  { ariaLabel, onClose, scrollableRef, withBackdrop, zIndex, className, children },
   ref
 ) {
   const [isClosing, setIsClosing] = useState(false)
@@ -86,12 +87,13 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
 
   return (
     <>
-      {withBackdrop && <div aria-hidden="true" className="bottom-sheet__backdrop" onClick={handleClose} />}
+      {withBackdrop && <div aria-hidden="true" className={`bottom-sheet__backdrop${isClosing ? ' bottom-sheet__backdrop--closing' : ''}`} style={zIndex != null ? { zIndex: zIndex - 1 } : undefined} onClick={handleClose} />}
       <dialog
         ref={dialogRef}
         open
         aria-label={ariaLabel}
         className={dialogClassName}
+        style={zIndex != null ? { zIndex } : undefined}
         onClose={handleClose}
         onAnimationEnd={handleAnimationEnd}
         onTouchStart={handleTouchStart}

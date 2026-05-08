@@ -97,7 +97,7 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
   return (
     <>
       <div aria-hidden="true" className="tx-sheet-overlay tx-sheet-overlay--top" onClick={() => sheetRef.current?.close()} />
-      <BottomSheet ref={sheetRef} ariaLabel="Редактировать операцию" onClose={onClose} className="edit-tx-sheet">
+      <BottomSheet ref={sheetRef} withBackdrop zIndex={104} ariaLabel="Редактировать операцию" onClose={onClose} className="edit-tx-sheet">
       <form className="edit-tx-sheet__form" onSubmit={handleSubmit}>
         <h2 className="edit-tx-sheet__title">Редактировать</h2>
         <div className="edit-tx-sheet__field">
@@ -170,7 +170,6 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
   onDeleted: (id: string) => void
   onUpdated: (tx: Transaction) => void
 }>) {
-  const sheetRef = useRef<BottomSheetHandle>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
 
@@ -185,8 +184,7 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
 
   return (
     <>
-      <div aria-hidden="true" className="tx-sheet-overlay" onClick={() => sheetRef.current?.close()} />
-      <BottomSheet ref={sheetRef} ariaLabel="Детали операции" onClose={onClose} className="tx-detail-sheet">
+      <BottomSheet withBackdrop zIndex={102} ariaLabel="Детали операции" onClose={onClose} className="tx-detail-sheet">
         <div className="tx-detail-sheet__content">
           <div className="tx-detail-sheet__header">
             <div className="transaction-item__icon">
@@ -290,7 +288,7 @@ function AllTransactionsSheet({ transactions, categoryMap, categories, onClose, 
 
   return (
     <>
-      <BottomSheet ariaLabel="Все операции" onClose={onClose} scrollableRef={listRef} className="all-tx-sheet">
+      <BottomSheet withBackdrop ariaLabel="Все операции" onClose={onClose} scrollableRef={listRef} className="all-tx-sheet">
         <div className="all-tx-sheet__list" data-scroll="true" ref={listRef}>
           {[...grouped.entries()].map(([dateKey, txs]) => (
             <div key={dateKey} className="tx-group">

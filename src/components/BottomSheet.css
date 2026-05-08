@@ -8,11 +8,26 @@
   to   { transform: translateY(100%); }
 }
 
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes backdrop-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
 .bottom-sheet__backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 99;
+  animation: backdrop-in 0.3s ease;
+}
+
+.bottom-sheet__backdrop--closing {
+  animation: backdrop-out 0.3s ease forwards;
 }
 
 .bottom-sheet {
