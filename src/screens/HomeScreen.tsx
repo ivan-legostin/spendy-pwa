@@ -190,19 +190,16 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
             <div className="transaction-item__icon">
               <Icon size={24} />
             </div>
-            <span className="tx-detail-sheet__category">{category?.title ?? '—'}</span>
+            <div className="tx-detail-sheet__header-info">
+              <span className="tx-detail-sheet__category">{category?.title ?? '—'}</span>
+              {transaction.note && (
+                <span className="tx-detail-sheet__note">{transaction.note}</span>
+              )}
+            </div>
             <span className={`tx-detail-sheet__amount tx-detail-sheet__amount--${type}`}>
               {formatAmount(transaction.amount, type)}
             </span>
           </div>
-          {transaction.note && (
-            <div className="tx-detail-sheet__meta">
-              <div className="tx-detail-sheet__meta-row">
-                <span className="tx-detail-sheet__meta-label">Заметка</span>
-                <span className="tx-detail-sheet__meta-value">{transaction.note}</span>
-              </div>
-            </div>
-          )}
           <div className="tx-detail-sheet__actions">
             <button className="tx-detail-sheet__btn tx-detail-sheet__btn--edit" onClick={() => setIsEditing(true)}>
               Редактировать
