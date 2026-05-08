@@ -160,6 +160,15 @@
   animation: slide-down 0.3s ease forwards;
 }
 
+.all-tx-sheet__handle {
+  width: 36px;
+  height: 4px;
+  background: #3a3a3c;
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
 .all-tx-sheet__header {
   display: flex;
   align-items: center;
