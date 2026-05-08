@@ -28,15 +28,25 @@
   min-height: 44px;
 }
 
-.bottom-nav__link svg {
+.bottom-nav__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, filter;
   transition: transform 0.1s ease, filter 0.1s ease;
 }
 
+.bottom-nav__link svg {
+  transition: color 0.1s ease;
+}
+
+.bottom-nav__link.active .bottom-nav__icon {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 6px #2D7FF9);
+}
 
 .bottom-nav__link.active svg {
   color: #2D7FF9;
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 6px #2D7FF9);
 }
 
 .bottom-nav__link.active .bottom-nav__fab-icon svg {

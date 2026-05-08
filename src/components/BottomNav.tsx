@@ -9,7 +9,9 @@ export default function BottomNav() {
         to="/"
         className={({ isActive }) => `bottom-nav__link${isActive ? ' active' : ''}`}
       >
-        <Home size={30} />
+        <div className="bottom-nav__icon">
+          <Home size={30} />
+        </div>
       </NavLink>
 
       <NavLink
@@ -26,7 +28,9 @@ export default function BottomNav() {
         to="/settings"
         className={({ isActive }) => `bottom-nav__link${isActive ? ' active' : ''}`}
       >
-        <Settings size={30} />
+        <div className="bottom-nav__icon">
+          <Settings size={30} />
+        </div>
       </NavLink>
     </nav>
   )
