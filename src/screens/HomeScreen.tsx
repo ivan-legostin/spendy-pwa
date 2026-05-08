@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
@@ -6,6 +6,7 @@ import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
 import { getTransactionsByMonth } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
+import BottomSheet from '../components/BottomSheet'
 import './HomeScreen.css'
 
 function formatAmount(amount: number, type: TransactionType): string {
@@ -70,15 +71,9 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
   categoryMap: Map<string, Category>
   onClose: () => void
 }>) {
-  const [isClosing, setIsClosing] = useState(false)
-  const dialogRef = useRef<HTMLDialogElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const dragState = useRef({ startY: 0, isDragging: false })
 
   const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
-
-  const handleClose = () => setIsClosing(true)
-  const handleAnimationEnd = () => { if (isClosing) onClose() }
 
   const todayKey = new Date().toLocaleDateString('en-CA')
   const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
@@ -105,72 +100,8 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
     return formatDate(date)
   }
 
-  const snapBack = () => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-    dialog.style.transition = 'transform 0.3s ease'
-    dialog.style.transform = 'translateY(0)'
-    setTimeout(() => {
-      if (dialogRef.current) {
-        dialogRef.current.style.transform = ''
-        dialogRef.current.style.transition = ''
-      }
-    }, 300)
-  }
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if ((listRef.current?.scrollTop ?? 0) > 0) return
-    dragState.current = { startY: e.touches[0].clientY, isDragging: true }
-  }
-
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-    const onTouchMove = (e: TouchEvent) => {
-      if (!dragState.current.isDragging) return
-      const delta = e.touches[0].clientY - dragState.current.startY
-      if (delta <= 0) return
-      e.preventDefault()
-      dialog.style.transition = 'none'
-      dialog.style.transform = `translateY(${delta}px)`
-    }
-    dialog.addEventListener('touchmove', onTouchMove, { passive: false })
-    return () => dialog.removeEventListener('touchmove', onTouchMove)
-  }, [])
-
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!dragState.current.isDragging) return
-    dragState.current.isDragging = false
-    const delta = e.changedTouches[0].clientY - dragState.current.startY
-    const dialog = dialogRef.current
-    if (!dialog) return
-    if (delta > 100) {
-      dialog.style.transition = 'transform 0.3s ease'
-      dialog.style.transform = 'translateY(100%)'
-      setTimeout(() => onClose(), 300)
-    } else {
-      snapBack()
-    }
-  }
-
-  const handleTouchCancel = () => {
-    dragState.current.isDragging = false
-    snapBack()
-  }
-
   return (
-    <dialog
-      ref={dialogRef}
-      open
-      aria-label="Все операции"
-      className={`all-tx-sheet${isClosing ? ' all-tx-sheet--closing' : ''}`}
-      onClose={handleClose}
-      onAnimationEnd={handleAnimationEnd}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
-    >
-      <div className="all-tx-sheet__handle" />
+    <BottomSheet ariaLabel="Все операции" onClose={onClose} scrollableRef={listRef} className="all-tx-sheet">
       <div className="all-tx-sheet__list" ref={listRef}>
         {[...grouped.entries()].map(([dateKey, txs]) => (
           <div key={dateKey} className="tx-group">
@@ -184,7 +115,7 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
           </div>
         ))}
       </div>
-    </dialog>
+    </BottomSheet>
   )
 }
 

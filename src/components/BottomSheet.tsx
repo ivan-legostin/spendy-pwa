@@ -1,0 +1,97 @@
+import React, { useEffect, useRef, useState } from 'react'
+import './BottomSheet.css'
+
+interface BottomSheetProps {
+  ariaLabel: string
+  onClose: () => void
+  scrollableRef?: React.RefObject<HTMLElement>
+  withBackdrop?: boolean
+  className?: string
+  children: React.ReactNode
+}
+
+export default function BottomSheet({ ariaLabel, onClose, scrollableRef, withBackdrop, className, children }: Readonly<BottomSheetProps>) {
+  const [isClosing, setIsClosing] = useState(false)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const dragState = useRef({ startY: 0, isDragging: false })
+
+  const handleClose = () => setIsClosing(true)
+  const handleAnimationEnd = () => { if (isClosing) onClose() }
+
+  const snapBack = () => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    dialog.style.transition = 'transform 0.3s ease'
+    dialog.style.transform = 'translateY(0)'
+    setTimeout(() => {
+      if (dialogRef.current) {
+        dialogRef.current.style.transform = ''
+        dialogRef.current.style.transition = ''
+      }
+    }, 300)
+  }
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if ((scrollableRef?.current?.scrollTop ?? 0) > 0) return
+    dragState.current = { startY: e.touches[0].clientY, isDragging: true }
+  }
+
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const onTouchMove = (e: TouchEvent) => {
+      if (!dragState.current.isDragging) return
+      const delta = e.touches[0].clientY - dragState.current.startY
+      if (delta <= 0) return
+      e.preventDefault()
+      dialog.style.transition = 'none'
+      dialog.style.transform = `translateY(${delta}px)`
+    }
+    dialog.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => dialog.removeEventListener('touchmove', onTouchMove)
+  }, [])
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!dragState.current.isDragging) return
+    dragState.current.isDragging = false
+    const delta = e.changedTouches[0].clientY - dragState.current.startY
+    const dialog = dialogRef.current
+    if (!dialog) return
+    if (delta > 100) {
+      dialog.style.transition = 'transform 0.3s ease'
+      dialog.style.transform = 'translateY(100%)'
+      setTimeout(() => onClose(), 300)
+    } else {
+      snapBack()
+    }
+  }
+
+  const handleTouchCancel = () => {
+    dragState.current.isDragging = false
+    snapBack()
+  }
+
+  const dialogClassName = ['bottom-sheet', isClosing ? 'bottom-sheet--closing' : '', className ?? '']
+    .filter(Boolean)
+    .join(' ')
+
+  return (
+    <>
+      {withBackdrop && <div aria-hidden="true" className="bottom-sheet__backdrop" onClick={handleClose} />}
+      <dialog
+        ref={dialogRef}
+        open
+        aria-label={ariaLabel}
+        className={dialogClassName}
+        onClose={handleClose}
+        onAnimationEnd={handleAnimationEnd}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
+        <div className="bottom-sheet__handle" />
+        {children}
+      </dialog>
+    </>
+  )
+}

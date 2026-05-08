@@ -5,18 +5,11 @@ import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
 import { saveTransactions } from '../dao/service/TransactionDaoService'
+import BottomSheet from '../components/BottomSheet'
 import './AddScreen.css'
 
 function getTodayStr(): string {
   return new Date().toISOString().split('T')[0]
-}
-
-function formatDateDisplay(dateStr: string): string {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
 }
 
 function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onSelect: (date: string) => void; onClose: () => void }>) {
@@ -41,18 +34,12 @@ function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onS
     `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 
   return (
-    <dialog
-      open
-      aria-label="Выбор даты"
-      className="calendar-overlay"
-      onClose={onClose}
-    >
+    <BottomSheet ariaLabel="Выбор даты" onClose={onClose} withBackdrop>
       <div className="calendar">
         <div className="calendar__header">
           <button className="calendar__nav" onClick={() => setViewDate(new Date(year, month - 1, 1))}>‹</button>
           <span className="calendar__month">{monthLabel}</span>
           <button className="calendar__nav" onClick={() => setViewDate(new Date(year, month + 1, 1))}>›</button>
-          <button className="calendar__close" onClick={onClose}>✕</button>
         </div>
         <div className="calendar__weekdays">
           {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(d => (
@@ -70,14 +57,14 @@ function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onS
                 day !== null && toDateStr(day) === todayStr && toDateStr(day) !== date ? 'calendar__day--today' : '',
               ].filter(Boolean).join(' ')}
               disabled={day === null}
-              onClick={() => { if (day) { onSelect(toDateStr(day)); onClose() } }}
+              onClick={() => { if (day) onSelect(toDateStr(day)) }}
             >
               {day ?? ''}
             </button>
           ))}
         </div>
       </div>
-    </dialog>
+    </BottomSheet>
   )
 }
 
@@ -208,7 +195,7 @@ export default function AddScreen() {
 
         <div className="add__meta">
           <button className="add__date-btn" onClick={() => setCalendarOpen(true)}>
-            {formatDateDisplay(date)}
+            <Icons.CalendarDays size={20} color="#94a3b8" />
           </button>
           <input
             className="add__note"
