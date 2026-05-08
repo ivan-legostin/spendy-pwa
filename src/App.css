@@ -15,6 +15,7 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   background: #000000;
   color: #f8fafc;
+  overscroll-behavior: none;
 }
 
 .app {

@@ -102,7 +102,7 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
 
   return (
     <BottomSheet ariaLabel="Все операции" onClose={onClose} scrollableRef={listRef} className="all-tx-sheet">
-      <div className="all-tx-sheet__list" ref={listRef}>
+      <div className="all-tx-sheet__list" data-scroll="true" ref={listRef}>
         {[...grouped.entries()].map(([dateKey, txs]) => (
           <div key={dateKey} className="tx-group">
             <div className="tx-group__header">

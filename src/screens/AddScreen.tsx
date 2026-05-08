@@ -151,7 +151,7 @@ export default function AddScreen() {
 
   return (
     <div className="add">
-      <div className="add__top">
+      <div className="add__top" data-scroll="true">
         <div className="add__toggle">
           <button
             className={`add__toggle-btn${type === TransactionType.expense ? ' add__toggle-btn--active' : ''}`}
