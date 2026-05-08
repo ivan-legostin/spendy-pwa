@@ -31,8 +31,9 @@ export async function getAllTransactions(): Promise<Transaction[]> {
  * @returns promise, завершающийся списком транзакций за месяц.
  */
 export async function getTransactionsByMonth(year: number, month: number): Promise<Transaction[]> {
-  const mm = String(month).padStart(2, '0');
-  const range = IDBKeyRange.bound(`${year}-${mm}-01`, `${year}-${mm}-31`);
+  const start = Date.UTC(year, month - 1, 1);
+  const end = Date.UTC(year, month, 1);
+  const range = IDBKeyRange.bound(start, end, false, true);
   const connection = await getConnection();
   return connection.getAllFromIndex('transactions', 'date', range);
 }

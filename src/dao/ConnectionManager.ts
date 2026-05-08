@@ -4,7 +4,7 @@ import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 const DEFAULT_CATEGORIES: Category[] = [
   // Категории расходов
@@ -22,10 +22,10 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 const DEFAULT_TRANSACTIONS: Transaction[] = [
-  { id: crypto.randomUUID(), title: 'Продукты',  amount: 18500,  date: '2026-05-03T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Такси',     amount: 4200,   date: '2026-05-02T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Зарплата',  amount: 95000,  date: '2026-05-01T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Дивиденды', amount: 12500,  date: '2026-04-30T00:00:00.000Z', categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Продукты',  amount: 18500,  date: Date.UTC(2026, 4, 3), categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Такси',     amount: 4200,   date: Date.UTC(2026, 4, 2), categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Зарплата',  amount: 95000,  date: Date.UTC(2026, 4, 1), categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
+  { id: crypto.randomUUID(), title: 'Дивиденды', amount: 12500,  date: Date.UTC(2026, 3, 30), categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
 ];
 
 /**
@@ -71,6 +71,16 @@ export function getConnection(): Promise<IDBPDatabase> {
           for (const tx of all) {
             if (/^\d{4}-\d{2}-\d{2}$/.test(tx.date)) {
               await store.put({ ...tx, date: `${tx.date}T00:00:00.000Z` });
+            }
+          }
+        }
+
+        if (oldVersion < 5) {
+          const store = transaction.objectStore('transactions');
+          const all = await store.getAll();
+          for (const tx of all) {
+            if (typeof tx.date === 'string') {
+              await store.put({ ...tx, date: new Date(tx.date).getTime() });
             }
           }
         }

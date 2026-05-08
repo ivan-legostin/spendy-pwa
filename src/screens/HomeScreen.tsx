@@ -15,8 +15,8 @@ function formatAmount(amount: number, type: TransactionType): string {
   return type === TransactionType.expense ? `-${formatted} ₽` : `${formatted} ₽`
 }
 
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('ru-RU', {
+function formatDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString('ru-RU', {
     day: 'numeric', month: 'long',
   })
 }
@@ -121,13 +121,13 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
 }>) {
   const sheetRef = useRef<BottomSheetHandle>(null)
   const [amount, setAmount] = useState(String(transaction.amount))
-  const [date, setDate] = useState(transaction.date.slice(0, 10))
+  const [date, setDate] = useState(new Date(transaction.date).toLocaleDateString('en-CA'))
   const [categoryId, setCategoryId] = useState(transaction.categoryId)
   const [note, setNote] = useState(transaction.note)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const updated: Transaction = { ...transaction, amount: Number(amount), date: `${date}T${transaction.date.slice(11) || '00:00:00.000Z'}`, categoryId, note }
+    const updated: Transaction = { ...transaction, amount: Number(amount), date: new Date(date + 'T00:00:00.000Z').getTime(), categoryId, note }
     await updateTransaction(updated)
     onSave(updated)
   }
@@ -273,14 +273,14 @@ function AllTransactionsSheet({ transactions, categoryMap, categories, onClose, 
   const listRef = useRef<HTMLDivElement>(null)
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
 
-  const sorted = [...transactions].sort((a, b) => b.date.localeCompare(a.date))
+  const sorted = [...transactions].sort((a, b) => b.date - a.date)
 
   const todayKey = new Date().toLocaleDateString('en-CA')
   const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
 
   const grouped = new Map<string, Transaction[]>()
   for (const tx of sorted) {
-    const key = tx.date.slice(0, 10)
+    const key = new Date(tx.date).toLocaleDateString('en-CA')
     if (!grouped.has(key)) grouped.set(key, [])
     grouped.get(key)!.push(tx)
   }
@@ -294,10 +294,10 @@ function AllTransactionsSheet({ transactions, categoryMap, categories, onClose, 
     return `${sign}${Math.abs(net).toLocaleString('ru-RU')} ₽`
   }
 
-  const getDayLabel = (dateKey: string, date: string) => {
+  const getDayLabel = (dateKey: string, timestamp: number) => {
     if (dateKey === todayKey) return 'Сегодня'
     if (dateKey === yesterdayKey) return 'Вчера'
-    return formatDate(date)
+    return formatDate(timestamp)
   }
 
   return (
@@ -415,7 +415,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
                 {formatAmount(catTotal, type)}
               </span>
             </div>
-            {[...txs].sort((a, b) => b.date.localeCompare(a.date)).map(tx => (
+            {[...txs].sort((a, b) => b.date - a.date).map(tx => (
               <button
                 key={tx.id}
                 type="button"
@@ -561,7 +561,7 @@ export default function HomeScreen() {
     .reduce((sum, tx) => sum + tx.amount, 0)
 
   const recentTransactions = [...transactions]
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => b.date - a.date)
     .slice(0, 5)
 
   const handleDeleted = (id: string) => setTransactions(prev => prev.filter(tx => tx.id !== id))

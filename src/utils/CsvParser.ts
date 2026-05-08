@@ -2,9 +2,15 @@ import { Category } from '../dao/models/Category';
 import { Transaction } from '../dao/models/Transaction';
 import { TransactionType } from '../dao/models/TransactionType';
 
+export interface CsvParseError {
+  line: number;
+  message: string;
+}
+
 export interface CsvParseResult {
   transactions: Transaction[];
   categories: Category[];
+  errors: CsvParseError[];
 }
 
 const CATEGORY_COLORS = [
@@ -31,9 +37,11 @@ function parseRow(line: string): string[] {
   return result;
 }
 
-function convertDate(dateStr: string): string {
+const DATE_PATTERN = /^\d{2}\.\d{2}\.\d{4}$/;
+
+function convertDate(dateStr: string): number {
   const [day, month, year] = dateStr.split('.');
-  return `${year}-${month}-${day}T00:00:00.000Z`;
+  return Date.UTC(Number(year), Number(month) - 1, Number(day));
 }
 
 /**
@@ -49,9 +57,28 @@ export function parseCsv(csvText: string, existingCategories: Category[]): CsvPa
 
   const categoryMap = new Map<string, Category>();
   const transactions: Transaction[] = [];
+  const errors: CsvParseError[] = [];
 
-  lines.forEach((line) => {
+  lines.forEach((line, index) => {
+    const lineNumber = index + 2; // +1 за заголовок, +1 за нумерацию с 1
     const [date, title, amount, categoryName, typeStr, note] = parseRow(line);
+
+    if (!categoryName?.trim()) {
+      errors.push({ line: lineNumber, message: 'не указана категория' });
+      return;
+    }
+
+    if (!DATE_PATTERN.test(date)) {
+      errors.push({ line: lineNumber, message: `неверный формат даты: "${date}", ожидается ДД.ММ.ГГГГ` });
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (!isFinite(parsedAmount)) {
+      errors.push({ line: lineNumber, message: `сумма не является числом: "${amount}"` });
+      return;
+    }
+
     const type = typeStr === 'Доходы' ? TransactionType.income : TransactionType.expense;
 
     if (!categoryMap.has(categoryName)) {
@@ -71,7 +98,7 @@ export function parseCsv(csvText: string, existingCategories: Category[]): CsvPa
     transactions.push({
       id: crypto.randomUUID(),
       title,
-      amount: parseFloat(amount),
+      amount: parsedAmount,
       date: convertDate(date),
       categoryId: category.id,
       note,
@@ -84,5 +111,6 @@ export function parseCsv(csvText: string, existingCategories: Category[]): CsvPa
   return {
     transactions,
     categories: newCategories,
+    errors,
   };
 }

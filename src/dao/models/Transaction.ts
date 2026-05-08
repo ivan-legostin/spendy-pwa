@@ -15,9 +15,9 @@ export interface Transaction {
    */
   amount: number;
   /**
-   * Дата транзакции в формате YYYY-MM-DDTHH:mm:ss.sssZ.
+   * Дата транзакции в виде Unix timestamp (миллисекунды).
    */
-  date: string;
+  date: number;
   /**
    * Идентификатор категории.
    */

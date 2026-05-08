@@ -49,11 +49,16 @@ export default function SettingsScreen() {
     setPendingFile(null);
     const text = await file.text();
     const existingCategories = await getAllCategories();
-    const { transactions, categories } = parseCsv(text, existingCategories);
+    const { transactions, categories, errors } = parseCsv(text, existingCategories);
     if (replace) await clearTransactions();
     await saveCategories(categories);
     await saveTransactions(transactions);
-    setStatus(`Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`);
+    let status = `Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`;
+    if (errors.length > 0) {
+      const details = errors.map(e => `строка ${e.line}: ${e.message}`).join('; ');
+      status += `. Пропущено строк: ${errors.length} (${details})`;
+    }
+    setStatus(status);
   }
 
   return (
