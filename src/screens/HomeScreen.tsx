@@ -434,7 +434,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
                 {formatAmount(catTotal, type)}
               </span>
             </div>
-            {txs.map(tx => (
+            {[...txs].sort((a, b) => b.date.localeCompare(a.date)).map(tx => (
               <button
                 key={tx.id}
                 type="button"
