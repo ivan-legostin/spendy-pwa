@@ -171,9 +171,6 @@ function AllTransactionsSheet({ transactions, categoryMap, onClose }: Readonly<{
       onTouchCancel={handleTouchCancel}
     >
       <div className="all-tx-sheet__handle" />
-      <div className="all-tx-sheet__header">
-        <button className="all-tx-sheet__close" onClick={handleClose}>✕</button>
-      </div>
       <div className="all-tx-sheet__list" ref={listRef}>
         {[...grouped.entries()].map(([dateKey, txs]) => (
           <div key={dateKey} className="tx-group">
