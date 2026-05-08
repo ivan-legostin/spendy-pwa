@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { PieChart, Pie, ResponsiveContainer } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
@@ -20,23 +21,65 @@ function formatDate(dateStr: string): string {
   })
 }
 
+const CHART_COLORS = ['#2D7FF9', '#4ade80', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16']
+
 /**
  * Элемент с суммой расходов и доходов.
  * @param income сумма доходов.
  * @param spent сумма расходов.
+ * @param onExpenseClick обработчик нажатия на плитку трат.
+ * @param onIncomeClick обработчик нажатия на плитку доходов.
  */
-function SummaryCard({ income, spent }: Readonly<{ income: number; spent: number }>) {
+function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<{
+  income: number
+  spent: number
+  onExpenseClick: () => void
+  onIncomeClick: () => void
+}>) {
   return (
     <div className="summary-card">
-      <div className="summary-card__tile">
+      <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onExpenseClick}>
         <span className="summary-card__value">{spent.toLocaleString('ru-RU')} ₽</span>
         <span className="summary-card__label">Траты</span>
-      </div>
-      <div className="summary-card__tile">
+      </button>
+      <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onIncomeClick}>
         <span className="summary-card__value">{income.toLocaleString('ru-RU')} ₽</span>
         <span className="summary-card__label">Доходы</span>
-      </div>
+      </button>
     </div>
+  )
+}
+
+function MonthSelector({ year, month, onChange }: Readonly<{
+  year: number
+  month: number
+  onChange: (year: number, month: number) => void
+}>) {
+  const options: { year: number; month: number; label: string }[] = []
+  const now = new Date()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    options.push({
+      year: d.getFullYear(),
+      month: d.getMonth() + 1,
+      label: d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' }),
+    })
+  }
+  return (
+    <select
+      className="month-selector"
+      value={`${year}-${month}`}
+      onChange={e => {
+        const [y, m] = e.target.value.split('-').map(Number)
+        onChange(y, m)
+      }}
+    >
+      {options.map(o => (
+        <option key={`${o.year}-${o.month}`} value={`${o.year}-${o.month}`}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   )
 }
 
@@ -313,6 +356,199 @@ function AllTransactionsSheet({ transactions, categoryMap, categories, onClose, 
   )
 }
 
+function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdated }: Readonly<{
+  type: TransactionType
+  categories: Category[]
+  onClose: () => void
+  onDeleted: (id: string) => void
+  onUpdated: (tx: Transaction) => void
+}>) {
+  const now = new Date()
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const categoryRefs = useRef(new Map<string, HTMLDivElement>())
+
+  const categoryMap = new Map(categories.map(c => [c.id, c]))
+
+  useEffect(() => {
+    setLoading(true)
+    getTransactionsByMonth(selectedYear, selectedMonth).then(txs => {
+      setTransactions(txs)
+      setLoading(false)
+    })
+  }, [selectedYear, selectedMonth])
+
+  const filtered = transactions.filter(tx => categoryMap.get(tx.categoryId)?.type === type)
+
+  const grouped = new Map<string, { category: Category | undefined; txs: Transaction[] }>()
+  for (const tx of filtered) {
+    if (!grouped.has(tx.categoryId)) {
+      grouped.set(tx.categoryId, { category: categoryMap.get(tx.categoryId), txs: [] })
+    }
+    grouped.get(tx.categoryId)!.txs.push(tx)
+  }
+
+  const groupedEntries = [...grouped.entries()]
+    .sort((a, b) =>
+      b[1].txs.reduce((s, t) => s + t.amount, 0) - a[1].txs.reduce((s, t) => s + t.amount, 0)
+    )
+
+  const total = filtered.reduce((s, t) => s + t.amount, 0)
+
+  const chartData = groupedEntries.map(([catId, { category, txs }], i) => ({
+    name: category?.title ?? '—',
+    value: txs.reduce((s, t) => s + t.amount, 0),
+    categoryId: catId,
+    fill: CHART_COLORS[i % CHART_COLORS.length],
+  }))
+
+  const scrollToCategory = (categoryId: string) => {
+    categoryRefs.current.get(categoryId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveCategory(categoryId)
+    setTimeout(() => setActiveCategory(id => id === categoryId ? null : id), 1500)
+  }
+
+  const title = type === TransactionType.expense ? 'Траты' : 'Доходы'
+
+  const categoriesSection = (
+    <div className="breakdown-sheet__categories">
+      {groupedEntries.map(([catId, { category, txs }], _) => {
+        const catTotal = txs.reduce((s, t) => s + t.amount, 0)
+        const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+        return (
+          <div
+            key={catId}
+            className={`breakdown-cat${activeCategory === catId ? ' breakdown-cat--active' : ''}`}
+            ref={el => { if (el) categoryRefs.current.set(catId, el); else categoryRefs.current.delete(catId) }}
+          >
+            <div className="breakdown-cat__header">
+              <div className="breakdown-cat__icon">
+                <Icon size={18} />
+              </div>
+              <span className="breakdown-cat__name">{category?.title ?? '—'}</span>
+              <span className={`breakdown-cat__total breakdown-cat__total--${type}`}>
+                {formatAmount(catTotal, type)}
+              </span>
+            </div>
+            {txs.map(tx => (
+              <button
+                key={tx.id}
+                type="button"
+                className="breakdown-tx-item"
+                onClick={() => setSelectedTx(tx)}
+              >
+                <span className="breakdown-tx-item__date">{formatDate(tx.date)}</span>
+                <span className={`breakdown-tx-item__amount breakdown-tx-item__amount--${type}`}>
+                  {formatAmount(tx.amount, type)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="breakdown-sheet__loading">
+          <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+        </div>
+      )
+    }
+    if (chartData.length === 0) {
+      return <div className="breakdown-sheet__empty">Нет операций за этот период</div>
+    }
+    return (
+      <>
+        <div className="breakdown-sheet__chart">
+          <div className="breakdown-sheet__donut-wrap">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  startAngle={90}
+                  endAngle={-270}
+                  onClick={(_, index) => scrollToCategory(chartData[index].categoryId)}
+                  cursor="pointer"
+                  strokeWidth={0}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="breakdown-sheet__donut-center" aria-hidden="true">
+              <span className="breakdown-sheet__donut-total">{total.toLocaleString('ru-RU')} ₽</span>
+              <span className="breakdown-sheet__donut-label">{title.toLowerCase()}</span>
+            </div>
+          </div>
+          <div className="breakdown-sheet__legend">
+            {chartData.map(entry => (
+              <button
+                key={entry.categoryId}
+                type="button"
+                className="breakdown-sheet__legend-item"
+                onClick={() => scrollToCategory(entry.categoryId)}
+              >
+                <span className="breakdown-sheet__legend-dot" style={{ background: entry.fill }} />
+                <span className="breakdown-sheet__legend-name">{entry.name}</span>
+                <span className="breakdown-sheet__legend-pct">
+                  {total > 0 ? Math.round((entry.value / total) * 100) : 0}%
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {categoriesSection}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <BottomSheet withBackdrop ariaLabel={title} onClose={onClose} scrollableRef={listRef} className="breakdown-sheet">
+        <div className="breakdown-sheet__header">
+          <h2 className="breakdown-sheet__title">{title}</h2>
+          <MonthSelector
+            year={selectedYear}
+            month={selectedMonth}
+            onChange={(y, m) => { setSelectedYear(y); setSelectedMonth(m) }}
+          />
+        </div>
+        <div className="breakdown-sheet__scroll" ref={listRef} data-scroll="true">
+          {renderContent()}
+        </div>
+      </BottomSheet>
+      {selectedTx && (
+        <TransactionDetailSheet
+          transaction={selectedTx}
+          category={categoryMap.get(selectedTx.categoryId)}
+          categories={categories}
+          onClose={() => setSelectedTx(null)}
+          onDeleted={id => {
+            setTransactions(prev => prev.filter(tx => tx.id !== id))
+            setSelectedTx(null)
+            onDeleted(id)
+          }}
+          onUpdated={tx => {
+            setTransactions(prev => prev.map(t => t.id === tx.id ? tx : t))
+            setSelectedTx(null)
+            onUpdated(tx)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
 /**
  * Главный экран приложения.
  */
@@ -321,6 +557,7 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([])
   const [allTxOpen, setAllTxOpen] = useState(false)
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
+  const [openSheet, setOpenSheet] = useState<TransactionType | null>(null)
 
   useEffect(() => {
     const now = new Date()
@@ -353,7 +590,12 @@ export default function HomeScreen() {
   return (
     <div className="home">
       <h1 className="home__title">Главная</h1>
-      <SummaryCard income={totalIncome} spent={totalSpent} />
+      <SummaryCard
+        income={totalIncome}
+        spent={totalSpent}
+        onExpenseClick={() => setOpenSheet(TransactionType.expense)}
+        onIncomeClick={() => setOpenSheet(TransactionType.income)}
+      />
       <div className="home__transactions">
         <div className="home__transactions-header">
           <h2 className="home__transactions-title">Операции</h2>
@@ -380,7 +622,17 @@ export default function HomeScreen() {
         />
       )}
 
-      {selectedTx && !allTxOpen && (
+      {openSheet !== null && (
+        <CategoryBreakdownSheet
+          type={openSheet}
+          categories={categories}
+          onClose={() => setOpenSheet(null)}
+          onDeleted={handleDeleted}
+          onUpdated={handleUpdated}
+        />
+      )}
+
+      {selectedTx && !allTxOpen && openSheet === null && (
         <TransactionDetailSheet
           transaction={selectedTx}
           category={categoryMap.get(selectedTx.categoryId)}
