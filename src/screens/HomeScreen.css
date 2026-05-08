@@ -69,6 +69,13 @@
   background: #1c1c1e;
   border-radius: 16px;
   margin-bottom: 10px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .transaction-item__icon {
@@ -165,4 +172,207 @@
 
 .all-tx-sheet .transaction-item {
   margin-bottom: 0;
+}
+
+.transaction-item--clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.transaction-item--clickable:active {
+  background: #2c2c2e;
+}
+
+/* Transaction Detail Sheet */
+.tx-detail-sheet__content {
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tx-detail-sheet__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tx-detail-sheet__header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tx-detail-sheet__category {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.tx-detail-sheet__amount {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.tx-detail-sheet__amount--income {
+  color: #4ade80;
+}
+
+.tx-detail-sheet__amount--expense {
+  color: #f8fafc;
+}
+
+.tx-detail-sheet__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #2c2c2e;
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.tx-detail-sheet__meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.tx-detail-sheet__meta-label {
+  font-size: 14px;
+  color: #8e8e93;
+  flex-shrink: 0;
+}
+
+.tx-detail-sheet__meta-value {
+  font-size: 14px;
+  color: #f8fafc;
+  text-align: right;
+}
+
+.tx-detail-sheet__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tx-detail-sheet__btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.tx-detail-sheet__btn--edit {
+  background: #2D7FF9;
+  color: #ffffff;
+}
+
+.tx-detail-sheet__btn--delete {
+  background: transparent;
+  border: 1.5px solid #ef4444;
+  color: #ef4444;
+}
+
+.tx-detail-sheet__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tx-detail-sheet__confirm-text {
+  text-align: center;
+  font-size: 14px;
+  color: #8e8e93;
+}
+
+.tx-detail-sheet__confirm-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.tx-detail-sheet__confirm-btns .tx-detail-sheet__btn {
+  flex: 1;
+}
+
+.tx-detail-sheet__btn--secondary {
+  background: #2c2c2e;
+  color: #8e8e93;
+}
+
+.tx-detail-sheet__btn--delete-confirm {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Edit Transaction Sheet */
+.edit-tx-sheet__form {
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.edit-tx-sheet__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.edit-tx-sheet__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-tx-sheet__label {
+  font-size: 14px;
+  color: #8e8e93;
+}
+
+.edit-tx-sheet__input {
+  background: #2c2c2e;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 16px;
+  color: #f8fafc;
+  width: 100%;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  color-scheme: dark;
+}
+
+.edit-tx-sheet__input:focus {
+  outline: 2px solid #2D7FF9;
+  outline-offset: -2px;
+}
+
+.edit-tx-sheet__footer {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-tx-sheet__btn {
+  flex: 1;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+.edit-tx-sheet__btn--save {
+  background: #2D7FF9;
+  color: #ffffff;
+}
+
+.edit-tx-sheet__btn--cancel {
+  background: #2c2c2e;
+  color: #8e8e93;
 }

@@ -38,6 +38,28 @@ export async function getTransactionsByMonth(year: number, month: number): Promi
 }
 
 /**
+ * Удалить транзакцию из БД по идентификатору.
+ *
+ * @param id идентификатор транзакции.
+ * @returns promise, завершающийся после удаления записи.
+ */
+export async function deleteTransaction(id: string): Promise<void> {
+  const connection = await getConnection();
+  await connection.delete('transactions', id);
+}
+
+/**
+ * Обновить транзакцию в БД.
+ *
+ * @param entity обновлённая модель транзакции.
+ * @returns promise, завершающийся после сохранения изменений.
+ */
+export async function updateTransaction(entity: Transaction): Promise<void> {
+  const connection = await getConnection();
+  await connection.put('transactions', entity);
+}
+
+/**
  * Удалить все транзакции из БД.
  *
  * @returns promise, завершающийся после очистки хранилища.
