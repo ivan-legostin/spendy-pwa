@@ -349,7 +349,10 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
                 className="breakdown-tx-item"
                 onClick={() => setSelectedTx(tx)}
               >
-                <span className="breakdown-tx-item__date">{formatDate(tx.date)}</span>
+                <div className="breakdown-tx-item__left">
+                  <span className="breakdown-tx-item__date">{formatDate(tx.date)}</span>
+                  {tx.note && <span className="breakdown-tx-item__note">{tx.note}</span>}
+                </div>
                 <span className={`breakdown-tx-item__amount breakdown-tx-item__amount--${type}`}>
                   {formatAmount(tx.amount, type)}
                 </span>
