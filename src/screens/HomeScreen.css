@@ -1,5 +1,5 @@
 .home {
-  padding: 20px 16px 32px;
+  padding: 20px 16px 90px;
   max-width: 480px;
   margin: 0 auto;
 }
@@ -52,22 +52,6 @@
   color: #8e8e93;
 }
 
-.home__transactions-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.home__see-all {
-  background: transparent;
-  border: 2px solid #334155;
-  border-radius: 20px;
-  padding: 6px 16px;
-  font-size: 14px;
-  color: #94a3b8;
-  cursor: pointer;
-}
 
 .transaction-item {
   display: flex;
