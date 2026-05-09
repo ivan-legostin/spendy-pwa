@@ -49,32 +49,74 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
   )
 }
 
+const MONTH_NAMES = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+
+function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
+  year: number
+  month: number
+  onClose: () => void
+  onChange: (year: number, month: number) => void
+}>) {
+  const now = new Date()
+  const [pickerYear, setPickerYear] = useState(year)
+
+  return (
+    <BottomSheet withBackdrop zIndex={120} ariaLabel="Выбор месяца" onClose={onClose} className="month-picker-sheet">
+      <div className="month-picker__header">
+        <button type="button" className="month-picker__arrow" onClick={() => setPickerYear(y => y - 1)}>‹</button>
+        <span className="month-picker__year">{pickerYear}</span>
+        <button
+          type="button"
+          className="month-picker__arrow"
+          onClick={() => setPickerYear(y => y + 1)}
+          disabled={pickerYear >= now.getFullYear()}
+        >›</button>
+      </div>
+      <div className="month-picker__grid">
+        {MONTH_NAMES.map((name, i) => {
+          const m = i + 1
+          const isSelected = pickerYear === year && m === month
+          const isDisabled = pickerYear > now.getFullYear() || (pickerYear === now.getFullYear() && m > now.getMonth() + 1)
+          return (
+            <button
+              key={m}
+              type="button"
+              className={`month-picker__cell${isSelected ? ' month-picker__cell--selected' : ''}`}
+              disabled={isDisabled}
+              onClick={() => { onChange(pickerYear, m); onClose() }}
+            >
+              {name}
+            </button>
+          )
+        })}
+      </div>
+    </BottomSheet>
+  )
+}
+
 function MonthSelector({ year, month, onChange }: Readonly<{
   year: number
   month: number
   onChange: (year: number, month: number) => void
 }>) {
-  const now = new Date()
-  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1
-
+  const [open, setOpen] = useState(false)
   const label = new Date(year, month - 1, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
 
-  const handlePrev = () => {
-    if (month === 1) onChange(year - 1, 12)
-    else onChange(year, month - 1)
-  }
-
-  const handleNext = () => {
-    if (month === 12) onChange(year + 1, 1)
-    else onChange(year, month + 1)
-  }
-
   return (
-    <div className="month-selector">
-      <button type="button" className="month-selector__arrow" onClick={handlePrev}>‹</button>
-      <span className="month-selector__label">{label}</span>
-      <button type="button" className="month-selector__arrow" onClick={handleNext} disabled={isCurrentMonth}>›</button>
-    </div>
+    <>
+      <button type="button" className="month-selector" onClick={() => setOpen(true)}>
+        <span className="month-selector__label">{label}</span>
+        <Icons.ChevronDown size={14} className="month-selector__chevron" />
+      </button>
+      {open && (
+        <MonthPickerSheet
+          year={year}
+          month={month}
+          onClose={() => setOpen(false)}
+          onChange={onChange}
+        />
+      )}
+    </>
   )
 }
 
