@@ -36,13 +36,14 @@
   cursor: pointer;
   background: transparent;
   color: #94a3b8;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
 .add__toggle-btn--active {
   background: #2D7FF9;
   color: #ffffff;
+  box-shadow: 0 0 10px #2D7FF9;
 }
 
 .add__categories {
