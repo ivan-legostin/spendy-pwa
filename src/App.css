@@ -4,6 +4,12 @@
   padding: 0;
   -webkit-touch-callout: none;
   user-select: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 input, textarea {
