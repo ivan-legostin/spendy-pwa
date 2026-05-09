@@ -1,7 +1,16 @@
 .home {
-  padding: 20px 16px 90px;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
+  padding: 20px 16px 0;
+}
+
+.home__tx-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 90px;
 }
 
 .home__title {

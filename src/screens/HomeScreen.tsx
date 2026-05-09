@@ -525,23 +525,25 @@ export default function HomeScreen() {
         onExpenseClick={() => setOpenSheet(TransactionType.expense)}
         onIncomeClick={() => setOpenSheet(TransactionType.income)}
       />
-      <div className="home__transactions">
-        {[...grouped.entries()].map(([dateKey, txs]) => (
-          <div key={dateKey} className="tx-group">
-            <div className="tx-group__header">
-              <span className="tx-group__date">{getDayLabel(dateKey, txs[0].date)}</span>
-              <span className="tx-group__total">{formatDayTotal(txs)}</span>
+      <div className="home__tx-scroll" data-scroll="true">
+        <div className="home__transactions">
+          {[...grouped.entries()].map(([dateKey, txs]) => (
+            <div key={dateKey} className="tx-group">
+              <div className="tx-group__header">
+                <span className="tx-group__date">{getDayLabel(dateKey, txs[0].date)}</span>
+                <span className="tx-group__total">{formatDayTotal(txs)}</span>
+              </div>
+              {txs.map(tx => (
+                <TransactionItem
+                  key={tx.id}
+                  transaction={tx}
+                  category={categoryMap.get(tx.categoryId)}
+                  onClick={() => setSelectedTx(tx)}
+                />
+              ))}
             </div>
-            {txs.map(tx => (
-              <TransactionItem
-                key={tx.id}
-                transaction={tx}
-                category={categoryMap.get(tx.categoryId)}
-                onClick={() => setSelectedTx(tx)}
-              />
-            ))}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {openSheet !== null && (
