@@ -262,79 +262,6 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
   )
 }
 
-function AllTransactionsSheet({ transactions, categoryMap, categories, onClose, onDeleted, onUpdated }: Readonly<{
-  transactions: Transaction[]
-  categoryMap: Map<string, Category>
-  categories: Category[]
-  onClose: () => void
-  onDeleted: (id: string) => void
-  onUpdated: (tx: Transaction) => void
-}>) {
-  const listRef = useRef<HTMLDivElement>(null)
-  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
-
-  const sorted = [...transactions].sort((a, b) => b.date - a.date)
-
-  const todayKey = new Date().toLocaleDateString('en-CA')
-  const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
-
-  const grouped = new Map<string, Transaction[]>()
-  for (const tx of sorted) {
-    const key = new Date(tx.date).toLocaleDateString('en-CA')
-    if (!grouped.has(key)) grouped.set(key, [])
-    grouped.get(key)!.push(tx)
-  }
-
-  const formatDayTotal = (txs: Transaction[]) => {
-    const net = txs.reduce((sum, tx) => {
-      const type = categoryMap.get(tx.categoryId)?.type ?? TransactionType.expense
-      return type === TransactionType.income ? sum + tx.amount : sum - tx.amount
-    }, 0)
-    const sign = net >= 0 ? '+' : '−'
-    return `${sign}${Math.abs(net).toLocaleString('ru-RU')} ₽`
-  }
-
-  const getDayLabel = (dateKey: string, timestamp: number) => {
-    if (dateKey === todayKey) return 'Сегодня'
-    if (dateKey === yesterdayKey) return 'Вчера'
-    return formatDate(timestamp)
-  }
-
-  return (
-    <>
-      <BottomSheet withBackdrop ariaLabel="Все операции" onClose={onClose} scrollableRef={listRef} className="all-tx-sheet">
-        <div className="all-tx-sheet__list" data-scroll="true" ref={listRef}>
-          {[...grouped.entries()].map(([dateKey, txs]) => (
-            <div key={dateKey} className="tx-group">
-              <div className="tx-group__header">
-                <span className="tx-group__date">{getDayLabel(dateKey, txs[0].date)}</span>
-                <span className="tx-group__total">{formatDayTotal(txs)}</span>
-              </div>
-              {txs.map(tx => (
-                <TransactionItem
-                  key={tx.id}
-                  transaction={tx}
-                  category={categoryMap.get(tx.categoryId)}
-                  onClick={() => setSelectedTx(tx)}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </BottomSheet>
-      {selectedTx && (
-        <TransactionDetailSheet
-          transaction={selectedTx}
-          category={categoryMap.get(selectedTx.categoryId)}
-          categories={categories}
-          onClose={() => setSelectedTx(null)}
-          onDeleted={(id) => { setSelectedTx(null); onDeleted(id) }}
-          onUpdated={(tx) => { setSelectedTx(null); onUpdated(tx) }}
-        />
-      )}
-    </>
-  )
-}
 
 function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdated }: Readonly<{
   type: TransactionType
@@ -535,7 +462,6 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
 export default function HomeScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [allTxOpen, setAllTxOpen] = useState(false)
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
   const [openSheet, setOpenSheet] = useState<TransactionType | null>(null)
 
@@ -560,9 +486,32 @@ export default function HomeScreen() {
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const recentTransactions = [...transactions]
-    .sort((a, b) => b.date - a.date)
-    .slice(0, 5)
+  const sorted = [...transactions].sort((a, b) => b.date - a.date)
+
+  const todayKey = new Date().toLocaleDateString('en-CA')
+  const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
+
+  const grouped = new Map<string, Transaction[]>()
+  for (const tx of sorted) {
+    const key = new Date(tx.date).toLocaleDateString('en-CA')
+    if (!grouped.has(key)) grouped.set(key, [])
+    grouped.get(key)!.push(tx)
+  }
+
+  const formatDayTotal = (txs: Transaction[]) => {
+    const net = txs.reduce((sum, tx) => {
+      const type = categoryMap.get(tx.categoryId)?.type ?? TransactionType.expense
+      return type === TransactionType.income ? sum + tx.amount : sum - tx.amount
+    }, 0)
+    const sign = net >= 0 ? '+' : '−'
+    return `${sign}${Math.abs(net).toLocaleString('ru-RU')} ₽`
+  }
+
+  const getDayLabel = (dateKey: string, timestamp: number) => {
+    if (dateKey === todayKey) return 'Сегодня'
+    if (dateKey === yesterdayKey) return 'Вчера'
+    return formatDate(timestamp)
+  }
 
   const handleDeleted = (id: string) => setTransactions(prev => prev.filter(tx => tx.id !== id))
   const handleUpdated = (updated: Transaction) => setTransactions(prev => prev.map(tx => tx.id === updated.id ? updated : tx))
@@ -577,30 +526,23 @@ export default function HomeScreen() {
         onIncomeClick={() => setOpenSheet(TransactionType.income)}
       />
       <div className="home__transactions">
-        <div className="home__transactions-header">
-          <h2 className="home__transactions-title">Операции</h2>
-          <button className="home__see-all" onClick={() => setAllTxOpen(true)}>Все операции &gt;</button>
-        </div>
-        {recentTransactions.map(tx => (
-          <TransactionItem
-            key={tx.id}
-            transaction={tx}
-            category={categoryMap.get(tx.categoryId)}
-            onClick={() => setSelectedTx(tx)}
-          />
+        {[...grouped.entries()].map(([dateKey, txs]) => (
+          <div key={dateKey} className="tx-group">
+            <div className="tx-group__header">
+              <span className="tx-group__date">{getDayLabel(dateKey, txs[0].date)}</span>
+              <span className="tx-group__total">{formatDayTotal(txs)}</span>
+            </div>
+            {txs.map(tx => (
+              <TransactionItem
+                key={tx.id}
+                transaction={tx}
+                category={categoryMap.get(tx.categoryId)}
+                onClick={() => setSelectedTx(tx)}
+              />
+            ))}
+          </div>
         ))}
       </div>
-
-      {allTxOpen && (
-        <AllTransactionsSheet
-          transactions={transactions}
-          categoryMap={categoryMap}
-          categories={categories}
-          onClose={() => setAllTxOpen(false)}
-          onDeleted={handleDeleted}
-          onUpdated={handleUpdated}
-        />
-      )}
 
       {openSheet !== null && (
         <CategoryBreakdownSheet
@@ -612,7 +554,7 @@ export default function HomeScreen() {
         />
       )}
 
-      {selectedTx && !allTxOpen && openSheet === null && (
+      {selectedTx && openSheet === null && (
         <TransactionDetailSheet
           transaction={selectedTx}
           category={categoryMap.get(selectedTx.categoryId)}
