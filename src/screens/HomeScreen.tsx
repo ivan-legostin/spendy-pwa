@@ -321,27 +321,8 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
   const categoryRefs = useRef(new Map<string, HTMLDivElement>())
-  const swipeStartX = useRef(0)
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
-
-  const handleChartSwipeStart = (e: React.TouchEvent) => {
-    swipeStartX.current = e.touches[0].clientX
-  }
-
-  const handleChartSwipeEnd = (e: React.TouchEvent) => {
-    const delta = e.changedTouches[0].clientX - swipeStartX.current
-    if (Math.abs(delta) < 50) return
-    if (delta > 0) {
-      if (selectedMonth === 1) { setSelectedYear(y => y - 1); setSelectedMonth(12) }
-      else setSelectedMonth(m => m - 1)
-    } else {
-      const now = new Date()
-      if (selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1) return
-      if (selectedMonth === 12) { setSelectedYear(y => y + 1); setSelectedMonth(1) }
-      else setSelectedMonth(m => m + 1)
-    }
-  }
 
   useEffect(() => {
     setLoading(true)
@@ -438,7 +419,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
     }
     return (
       <>
-        <div className="breakdown-sheet__chart" onTouchStart={handleChartSwipeStart} onTouchEnd={handleChartSwipeEnd}>
+        <div className="breakdown-sheet__chart">
           <div className="breakdown-sheet__donut-wrap">
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
