@@ -39,11 +39,17 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
     <div className="summary-card">
       <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onExpenseClick}>
         <span className="summary-card__value">{spent.toLocaleString('ru-RU')} ₽</span>
-        <span className="summary-card__label">Траты</span>
+        <div className="summary-card__footer">
+          <span className="summary-card__label">Траты</span>
+          <Icons.ChevronRight size={14} className="summary-card__chevron" />
+        </div>
       </button>
       <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onIncomeClick}>
         <span className="summary-card__value">{income.toLocaleString('ru-RU')} ₽</span>
-        <span className="summary-card__label">Доходы</span>
+        <div className="summary-card__footer">
+          <span className="summary-card__label">Доходы</span>
+          <Icons.ChevronRight size={14} className="summary-card__chevron" />
+        </div>
       </button>
     </div>
   )

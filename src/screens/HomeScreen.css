@@ -34,7 +34,7 @@
   background: #2c2c2e;
   border-radius: 20px;
   padding: 20px 16px;
-  border: none;
+  border: 1px solid #3a3a3c;
   font: inherit;
   color: inherit;
   text-align: left;
@@ -56,8 +56,18 @@
   color: #f8fafc;
 }
 
+.summary-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .summary-card__label {
   font-size: 14px;
+  color: #8e8e93;
+}
+
+.summary-card__chevron {
   color: #8e8e93;
 }
 
