@@ -170,13 +170,14 @@
   cursor: pointer;
   background: #1c1c1e;
   color: #4b5563;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   font-family: inherit;
 }
 
 .add__save--active {
   background: #2D7FF9;
   color: #ffffff;
+  box-shadow: 0 0 10px #2D7FF9;
 }
 
 .calendar {
