@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
@@ -6,6 +6,8 @@ import AddScreen from './screens/AddScreen'
 import SettingsScreen from './screens/SettingsScreen'
 
 export default function App() {
+  const location = useLocation()
+
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
@@ -14,7 +16,7 @@ export default function App() {
   return (
     <div className="app">
       <main>
-        <Routes>
+        <Routes key={location.pathname}>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/add" element={<AddScreen />} />
           <Route path="/settings" element={<SettingsScreen />} />
