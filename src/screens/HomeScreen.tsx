@@ -696,6 +696,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
   const [excludedCategories, setExcludedCategories] = useState<Set<string>>(new Set())
   const [filterOpen, setFilterOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
 
   useEffect(() => {
@@ -736,81 +737,101 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
     })
 
   return (
-    <BottomSheet withBackdrop zIndex={102} ariaLabel="Топ трат" onClose={onClose} scrollableRef={scrollRef} className="top-tx-sheet">
-      <div className="top-tx-sheet__header">
-        <h2 className="top-tx-sheet__title">Топ трат</h2>
-        <div className="top-tx-sheet__controls">
-        <YearSelector year={year} onChange={setYear} />
-        <div className="top-tx-filter-wrap">
-          {availableCategories.length > 0 && (
-            <button
-              type="button"
-              className={`top-tx-filter-btn${excludedCategories.size > 0 ? ' top-tx-filter-btn--active' : ''}`}
-              onClick={() => setFilterOpen(o => !o)}
-            >
-              <Icons.SlidersHorizontal size={15} />
-              {excludedCategories.size > 0 && (
-                <span className="top-tx-filter-badge">
-                  {availableCategories.length - excludedCategories.size}/{availableCategories.length}
-                </span>
+    <>
+      <BottomSheet withBackdrop zIndex={102} ariaLabel="Топ 10 трат" onClose={onClose} scrollableRef={scrollRef} className="top-tx-sheet">
+        <div className="top-tx-sheet__header">
+          <h2 className="top-tx-sheet__title">Топ 10 трат</h2>
+          <div className="top-tx-sheet__controls">
+            <YearSelector year={year} onChange={setYear} />
+            <div className="top-tx-filter-wrap">
+              {availableCategories.length > 0 && (
+                <button
+                  type="button"
+                  className={`top-tx-filter-btn${excludedCategories.size > 0 ? ' top-tx-filter-btn--active' : ''}`}
+                  onClick={() => setFilterOpen(o => !o)}
+                >
+                  <Icons.SlidersHorizontal size={15} />
+                  {excludedCategories.size > 0 && (
+                    <span className="top-tx-filter-badge">
+                      {availableCategories.length - excludedCategories.size}/{availableCategories.length}
+                    </span>
+                  )}
+                </button>
               )}
-            </button>
-          )}
-          {filterOpen && (
-            <>
-              <div aria-hidden="true" className="top-tx-dropdown-overlay" onClick={() => setFilterOpen(false)} />
-              <div className="top-tx-dropdown">
-                {availableCategories.map(cat => {
-                  const Icon = (Icons[cat.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
-                  const isActive = !excludedCategories.has(cat.id)
-                  return (
-                    <button key={cat.id} type="button" className="top-tx-dropdown-item" onClick={() => { toggleCategory(cat.id); setFilterOpen(false) }}>
-                      <Icon size={15} />
-                      <span className="top-tx-dropdown-item__name">{cat.title}</span>
-                      {isActive && <Icons.Check size={15} className="top-tx-dropdown-item__check" />}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
+              {filterOpen && (
+                <>
+                  <div aria-hidden="true" className="top-tx-dropdown-overlay" onClick={() => setFilterOpen(false)} />
+                  <div className="top-tx-dropdown">
+                    {availableCategories.map(cat => {
+                      const Icon = (Icons[cat.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+                      const isActive = !excludedCategories.has(cat.id)
+                      return (
+                        <button key={cat.id} type="button" className="top-tx-dropdown-item" onClick={() => toggleCategory(cat.id)}>
+                          <Icon size={15} />
+                          <span className="top-tx-dropdown-item__name">{cat.title}</span>
+                          {isActive && <Icons.Check size={15} className="top-tx-dropdown-item__check" />}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-        </div>
-      </div>
-      {loading ? (
-        <div className="comparison-sheet__loading">
-          <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
-        </div>
-      ) : topTransactions.length === 0 ? (
-        <div className="breakdown-sheet__empty">Нет операций за этот период</div>
-      ) : (
-        <div className="top-tx-list" ref={scrollRef} data-scroll="true">
-          {topTransactions.map((tx, i) => {
-            const category = categoryMap.get(tx.categoryId)
-            const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
-            const type = category?.type ?? TransactionType.expense
-            return (
-              <div key={tx.id} className="top-tx-item">
-                <span className="top-tx-item__rank">#{i + 1}</span>
-                <div className="top-tx-item__icon">
-                  <Icon size={20} />
-                </div>
-                <div className="top-tx-item__info">
-                  <span className="top-tx-item__category">{category?.title ?? '—'}</span>
-                  {tx.note && <span className="top-tx-item__note">{tx.note}</span>}
-                </div>
-                <div className="top-tx-item__right">
-                  <span className={`top-tx-item__amount top-tx-item__amount--${type}`}>
-                    {formatAmount(tx.amount, type)}
-                  </span>
-                  <span className="top-tx-item__date">{formatDate(tx.date)}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        {loading ? (
+          <div className="comparison-sheet__loading">
+            <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+          </div>
+        ) : allExpenses.length === 0 ? (
+          <div className="breakdown-sheet__empty">Нет операций за этот период</div>
+        ) : topTransactions.length === 0 ? (
+          <div className="breakdown-sheet__empty">Все категории скрыты фильтром</div>
+        ) : (
+          <div className="top-tx-list" ref={scrollRef} data-scroll="true">
+            {topTransactions.map((tx, i) => {
+              const category = categoryMap.get(tx.categoryId)
+              const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+              const type = category?.type ?? TransactionType.expense
+              return (
+                <button key={tx.id} type="button" className="top-tx-item" onClick={() => setSelectedTx(tx)}>
+                  <span className="top-tx-item__rank">#{i + 1}</span>
+                  <div className="top-tx-item__icon">
+                    <Icon size={20} />
+                  </div>
+                  <div className="top-tx-item__info">
+                    <span className="top-tx-item__category">{category?.title ?? '—'}</span>
+                    {tx.note && <span className="top-tx-item__note">{tx.note}</span>}
+                  </div>
+                  <div className="top-tx-item__right">
+                    <span className={`top-tx-item__amount top-tx-item__amount--${type}`}>
+                      {formatAmount(tx.amount, type)}
+                    </span>
+                    <span className="top-tx-item__date">{formatDate(tx.date)}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </BottomSheet>
+      {selectedTx && (
+        <TransactionDetailSheet
+          transaction={selectedTx}
+          category={categoryMap.get(selectedTx.categoryId)}
+          categories={categories}
+          onClose={() => setSelectedTx(null)}
+          onDeleted={id => {
+            setAllExpenses(prev => prev.filter(tx => tx.id !== id))
+            setSelectedTx(null)
+          }}
+          onUpdated={tx => {
+            setAllExpenses(prev => prev.map(t => t.id === tx.id ? tx : t))
+            setSelectedTx(null)
+          }}
+        />
       )}
-    </BottomSheet>
+    </>
   )
 }
 
