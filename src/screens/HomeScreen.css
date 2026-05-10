@@ -462,9 +462,9 @@
 .top-tx-item__icon {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: #2D7FF9;
-  color: #fff;
+  border-radius: 12px;
+  background: rgba(45, 127, 249, 0.15);
+  color: #2D7FF9;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,9 +594,9 @@
 .transaction-item__icon {
   width: 48px;
   height: 48px;
-  color: #ffffff;
-  background: #2D7FF9;
-  border-radius: 50%;
+  color: #2D7FF9;
+  background: rgba(45, 127, 249, 0.15);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1125,12 +1125,12 @@
 .breakdown-cat__icon {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  background: #2D7FF9;
+  color: #2D7FF9;
+  background: rgba(45, 127, 249, 0.15);
   flex-shrink: 0;
 }
 
