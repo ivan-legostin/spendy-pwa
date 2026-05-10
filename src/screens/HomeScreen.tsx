@@ -525,6 +525,13 @@ function calcStats(txs: Transaction[], categoryMap: Map<string, Category>): Peri
   return { income, expense }
 }
 
+function formatPeriodLabel(fromYear: number, fromMonth: number, toYear: number, toMonth: number): string {
+  const from = new Date(fromYear, fromMonth - 1, 1).toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })
+  if (fromYear === toYear && fromMonth === toMonth) return from
+  const to = new Date(toYear, toMonth - 1, 1).toLocaleDateString('ru-RU', { month: 'short', year: 'numeric' })
+  return `${from} — ${to}`
+}
+
 function formatDelta(a: number, b: number): string {
   const delta = b - a
   if (delta === 0) return '—'
@@ -535,8 +542,11 @@ function formatDelta(a: number, b: number): string {
   return `${sign}${abs} ₽ / ${sign}${pct}%`
 }
 
-function ComparisonMetric({ label, a, b, positiveWhenHigher }: Readonly<{
+function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHigher }: Readonly<{
+  icon: ReactNode
   label: string
+  labelA: string
+  labelB: string
   a: number
   b: number
   positiveWhenHigher: boolean
@@ -547,41 +557,24 @@ function ComparisonMetric({ label, a, b, positiveWhenHigher }: Readonly<{
   return (
     <div className="comparison-metric">
       <div className="comparison-metric__header">
-        <span className="comparison-metric__label">{label}</span>
+        <div className="comparison-metric__label-wrap">
+          <div className="comparison-metric__icon">{icon}</div>
+          <span className="comparison-metric__label">{label}</span>
+        </div>
         <span className={`comparison-metric__delta${deltaClass}`}>{formatDelta(a, b)}</span>
       </div>
       <div className="comparison-metric__period-row">
-        <span className="comparison-metric__period-label">Период А</span>
+        <span className="comparison-metric__period-label">{labelA}</span>
         <span className="comparison-metric__value">{a.toLocaleString('ru-RU')} ₽</span>
       </div>
       <div className="comparison-metric__period-row">
-        <span className="comparison-metric__period-label">Период Б</span>
+        <span className="comparison-metric__period-label">{labelB}</span>
         <span className="comparison-metric__value">{b.toLocaleString('ru-RU')} ₽</span>
       </div>
     </div>
   )
 }
 
-function PeriodRangeSelector({ label, fromYear, fromMonth, toYear, toMonth, onFromChange, onToChange }: Readonly<{
-  label: string
-  fromYear: number
-  fromMonth: number
-  toYear: number
-  toMonth: number
-  onFromChange: (year: number, month: number) => void
-  onToChange: (year: number, month: number) => void
-}>) {
-  return (
-    <div className="period-range">
-      <span className="period-range__label">{label}</span>
-      <div className="period-range__selectors">
-        <MonthSelector year={fromYear} month={fromMonth} onChange={onFromChange} />
-        <Icons.ArrowRight size={14} className="period-range__arrow" />
-        <MonthSelector year={toYear} month={toMonth} onChange={onToChange} />
-      </div>
-    </div>
-  )
-}
 
 function AnalyticsBlockCard({ icon, title, subtitle, onClick }: Readonly<{
   icon: ReactNode
@@ -635,25 +628,32 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
 
   const bothValid = isPeriodValid(periodA) && isPeriodValid(periodB)
 
+  const labelA = formatPeriodLabel(periodA.fromYear, periodA.fromMonth, periodA.toYear, periodA.toMonth)
+  const labelB = formatPeriodLabel(periodB.fromYear, periodB.fromMonth, periodB.toYear, periodB.toMonth)
+
   return (
     <BottomSheet withBackdrop zIndex={102} ariaLabel="Сравнение периодов" onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
-      <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
+      <div className="comparison-sheet__header">
         <h2 className="comparison-sheet__title">Сравнение периодов</h2>
+      </div>
+      <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
         <div className="comparison-periods">
-          <PeriodRangeSelector
-            label="Период А"
-            fromYear={periodA.fromYear} fromMonth={periodA.fromMonth}
-            toYear={periodA.toYear} toMonth={periodA.toMonth}
-            onFromChange={(y, m) => setPeriodA(p => ({ ...p, fromYear: y, fromMonth: m }))}
-            onToChange={(y, m) => setPeriodA(p => ({ ...p, toYear: y, toMonth: m }))}
-          />
-          <PeriodRangeSelector
-            label="Период Б"
-            fromYear={periodB.fromYear} fromMonth={periodB.fromMonth}
-            toYear={periodB.toYear} toMonth={periodB.toMonth}
-            onFromChange={(y, m) => setPeriodB(p => ({ ...p, fromYear: y, fromMonth: m }))}
-            onToChange={(y, m) => setPeriodB(p => ({ ...p, toYear: y, toMonth: m }))}
-          />
+          <div className="comparison-period-card">
+            <span className="comparison-period-card__label">Период А</span>
+            <div className="comparison-period-card__selectors">
+              <MonthSelector year={periodA.fromYear} month={periodA.fromMonth} onChange={(y, m) => setPeriodA(p => ({ ...p, fromYear: y, fromMonth: m }))} />
+              <Icons.ArrowRight size={14} className="comparison-period-card__arrow" />
+              <MonthSelector year={periodA.toYear} month={periodA.toMonth} onChange={(y, m) => setPeriodA(p => ({ ...p, toYear: y, toMonth: m }))} />
+            </div>
+          </div>
+          <div className="comparison-period-card">
+            <span className="comparison-period-card__label">Период Б</span>
+            <div className="comparison-period-card__selectors">
+              <MonthSelector year={periodB.fromYear} month={periodB.fromMonth} onChange={(y, m) => setPeriodB(p => ({ ...p, fromYear: y, fromMonth: m }))} />
+              <Icons.ArrowRight size={14} className="comparison-period-card__arrow" />
+              <MonthSelector year={periodB.toYear} month={periodB.toMonth} onChange={(y, m) => setPeriodB(p => ({ ...p, toYear: y, toMonth: m }))} />
+            </div>
+          </div>
         </div>
         {!bothValid && (
           <p className="comparison-sheet__error">Конечная дата не может быть раньше начальной</p>
@@ -665,9 +665,9 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
         )}
         {bothValid && !loading && statsA && statsB && (
           <div className="comparison-results">
-            <ComparisonMetric label="Доходы" a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
-            <ComparisonMetric label="Траты" a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
-            <ComparisonMetric label="Баланс" a={statsA.income - statsA.expense} b={statsB.income - statsB.expense} positiveWhenHigher={true} />
+            <ComparisonMetric icon={<Icons.TrendingUp size={16} />} label="Доходы" labelA={labelA} labelB={labelB} a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
+            <ComparisonMetric icon={<Icons.TrendingDown size={16} />} label="Траты" labelA={labelA} labelB={labelB} a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
+            <ComparisonMetric icon={<Icons.Wallet size={16} />} label="Баланс" labelA={labelA} labelB={labelB} a={statsA.income - statsA.expense} b={statsB.income - statsB.expense} positiveWhenHigher={true} />
           </div>
         )}
       </div>
