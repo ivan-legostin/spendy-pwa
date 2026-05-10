@@ -305,6 +305,96 @@
 }
 
 /* Top Transactions List */
+.top-tx-sheet__controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-tx-filter-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.top-tx-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #2c2c2e;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  color: #8e8e93;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.top-tx-filter-btn--active {
+  color: #2D7FF9;
+}
+
+.top-tx-filter-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: #2D7FF9;
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 6px;
+}
+
+.top-tx-dropdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+.top-tx-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #2c2c2e;
+  border-radius: 14px;
+  overflow: hidden;
+  z-index: 11;
+  min-width: 200px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.top-tx-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: none;
+  color: #f8fafc;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.top-tx-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.top-tx-dropdown-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.top-tx-dropdown-item__name {
+  flex: 1;
+}
+
+.top-tx-dropdown-item__check {
+  color: #2D7FF9;
+  flex-shrink: 0;
+}
+
 .top-tx-list {
   flex: 1;
   overflow-y: auto;
@@ -366,10 +456,25 @@
   color: #8e8e93;
 }
 
+.top-tx-item__note {
+  font-size: 12px;
+  color: #8e8e93;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-tx-item__right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
 .top-tx-item__amount {
   font-size: 15px;
   font-weight: 700;
-  flex-shrink: 0;
 }
 
 .top-tx-item__amount--income {
