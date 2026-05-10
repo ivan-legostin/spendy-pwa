@@ -89,6 +89,7 @@ export default function AddScreen() {
   const [date, setDate] = useState(getTodayStr)
   const [note, setNote] = useState('')
   const [calendarOpen, setCalendarOpen] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     getAllCategories().then(setCategories)
@@ -140,6 +141,8 @@ export default function AddScreen() {
     setAmount('')
     setDate(getTodayStr())
     setNote('')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1000)
   }
 
   const displayAmount = (() => {
@@ -209,8 +212,8 @@ export default function AddScreen() {
         <NumPad onPress={handleNumpad} />
 
         <button
-          className={`add__save${canSave ? ' add__save--active' : ''}`}
-          disabled={!canSave}
+          className={`add__save${saved ? ' add__save--saved' : canSave ? ' add__save--active' : ''}`}
+          disabled={!canSave && !saved}
           onClick={handleSave}
         >
           Сохранить

@@ -171,14 +171,25 @@
   cursor: pointer;
   background: #1c1c1e;
   color: #4b5563;
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   font-family: inherit;
+  transition: background 0.35s, color 0.35s, box-shadow 0.35s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .add__save--active {
   background: #2D7FF9;
   color: #ffffff;
   box-shadow: 0 0 10px #2D7FF9;
+}
+
+.add__save--saved {
+  background: #16a34a;
+  color: #ffffff;
+  box-shadow: 0 0 10px #16a34a;
 }
 
 .calendar {
