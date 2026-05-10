@@ -675,8 +675,79 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
   )
 }
 
+function YearSelector({ year, onChange }: Readonly<{ year: number; onChange: (year: number) => void }>) {
+  const maxYear = new Date().getFullYear()
+  return (
+    <div className="year-selector">
+      <button type="button" className="year-selector__arrow" onClick={() => onChange(year - 1)}>‹</button>
+      <span className="year-selector__label">{year}</span>
+      <button type="button" className="year-selector__arrow" disabled={year >= maxYear} onClick={() => onChange(year + 1)}>›</button>
+    </div>
+  )
+}
+
+function TopTransactionsSheet({ categories, onClose }: Readonly<{
+  categories: Category[]
+  onClose: () => void
+}>) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+
+  useEffect(() => {
+    setLoading(true)
+    getTransactionsByPeriod(year, 1, year, 12).then(txs => {
+      const expenses = txs.filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
+      setTransactions([...expenses].sort((a, b) => b.amount - a.amount).slice(0, 10))
+      setLoading(false)
+    })
+  }, [year])
+
+  return (
+    <BottomSheet withBackdrop zIndex={102} ariaLabel="Топ трат" onClose={onClose} scrollableRef={scrollRef} className="top-tx-sheet">
+      <div className="top-tx-sheet__header">
+        <h2 className="top-tx-sheet__title">Топ трат</h2>
+        <YearSelector year={year} onChange={setYear} />
+      </div>
+      {loading ? (
+        <div className="comparison-sheet__loading">
+          <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+        </div>
+      ) : transactions.length === 0 ? (
+        <div className="breakdown-sheet__empty">Нет операций за этот год</div>
+      ) : (
+        <div className="top-tx-list" ref={scrollRef} data-scroll="true">
+          {transactions.map((tx, i) => {
+            const category = categoryMap.get(tx.categoryId)
+            const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+            const type = category?.type ?? TransactionType.expense
+            return (
+              <div key={tx.id} className="top-tx-item">
+                <span className="top-tx-item__rank">#{i + 1}</span>
+                <div className="top-tx-item__icon">
+                  <Icon size={20} />
+                </div>
+                <div className="top-tx-item__info">
+                  <span className="top-tx-item__category">{category?.title ?? '—'}</span>
+                  <span className="top-tx-item__date">{formatDate(tx.date)}</span>
+                </div>
+                <span className={`top-tx-item__amount top-tx-item__amount--${type}`}>
+                  {formatAmount(tx.amount, type)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </BottomSheet>
+  )
+}
+
 function AnalyticsSheet({ categories, onClose }: Readonly<{ categories: Category[]; onClose: () => void }>) {
   const [comparisonOpen, setComparisonOpen] = useState(false)
+  const [topTransactionsOpen, setTopTransactionsOpen] = useState(false)
   return (
     <>
       <BottomSheet withBackdrop ariaLabel="Аналитика" onClose={onClose} className="analytics-sheet">
@@ -687,9 +758,18 @@ function AnalyticsSheet({ categories, onClose }: Readonly<{ categories: Category
           subtitle="Сравните доходы и расходы за два периода"
           onClick={() => setComparisonOpen(true)}
         />
+        <AnalyticsBlockCard
+          icon={<Icons.Trophy size={20} />}
+          title="Топ трат"
+          subtitle="Самые крупные расходы за год"
+          onClick={() => setTopTransactionsOpen(true)}
+        />
       </BottomSheet>
       {comparisonOpen && (
         <ComparisonSheet categories={categories} onClose={() => setComparisonOpen(false)} />
+      )}
+      {topTransactionsOpen && (
+        <TopTransactionsSheet categories={categories} onClose={() => setTopTransactionsOpen(false)} />
       )}
     </>
   )

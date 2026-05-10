@@ -249,6 +249,137 @@
   color: #f87171;
 }
 
+/* Top Transactions Sheet */
+.top-tx-sheet {
+  height: 85dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-tx-sheet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  flex-shrink: 0;
+}
+
+.top-tx-sheet__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+}
+
+/* Year Selector */
+.year-selector {
+  display: flex;
+  align-items: center;
+  background: #2c2c2e;
+  border-radius: 10px;
+  padding: 2px 4px;
+}
+
+.year-selector__arrow {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.year-selector__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.year-selector__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  min-width: 38px;
+  text-align: center;
+}
+
+/* Top Transactions List */
+.top-tx-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.top-tx-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #2c2c2e;
+  border-radius: 14px;
+}
+
+.top-tx-item__rank {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8e8e93;
+  min-width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.top-tx-item__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2D7FF9;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.top-tx-item__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.top-tx-item__category {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-tx-item__date {
+  font-size: 12px;
+  color: #8e8e93;
+}
+
+.top-tx-item__amount {
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.top-tx-item__amount--income {
+  color: #4ade80;
+}
+
+.top-tx-item__amount--expense {
+  color: #f8fafc;
+}
+
 .summary-card {
   display: flex;
   gap: 12px;
