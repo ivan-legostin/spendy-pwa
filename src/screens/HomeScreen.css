@@ -202,23 +202,22 @@
   gap: 12px;
 }
 
+.comparison-metric__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .comparison-metric__label {
   font-size: 13px;
   color: #8e8e93;
   font-weight: 500;
 }
 
-.comparison-metric__row {
+.comparison-metric__period-row {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.comparison-metric__col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .comparison-metric__value {
@@ -228,7 +227,7 @@
 }
 
 .comparison-metric__period-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #8e8e93;
 }
 
@@ -238,7 +237,6 @@
   color: #8e8e93;
   text-align: right;
   white-space: nowrap;
-  padding-bottom: 2px;
 }
 
 .comparison-metric__delta--pos {
@@ -1174,4 +1172,43 @@
 
 .breakdown-tx-item__amount--expense {
   color: #f8fafc;
+}
+
+/* Scroll to top button */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 96px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #2D7FF9;
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(45, 127, 249, 0.4);
+  -webkit-tap-highlight-color: transparent;
+  animation: scroll-top-in 0.2s ease;
+  z-index: 10;
+}
+
+.scroll-top-btn--hiding {
+  animation: scroll-top-out 0.2s ease forwards;
+}
+
+.scroll-top-btn:active {
+  opacity: 0.8;
+}
+
+@keyframes scroll-top-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scroll-top-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(8px); }
 }

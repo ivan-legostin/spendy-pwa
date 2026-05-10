@@ -546,17 +546,17 @@ function ComparisonMetric({ label, a, b, positiveWhenHigher }: Readonly<{
   const deltaClass = delta !== 0 ? ` comparison-metric__delta--${isPositive ? 'pos' : 'neg'}` : ''
   return (
     <div className="comparison-metric">
-      <span className="comparison-metric__label">{label}</span>
-      <div className="comparison-metric__row">
-        <div className="comparison-metric__col">
-          <span className="comparison-metric__value">{a.toLocaleString('ru-RU')} ₽</span>
-          <span className="comparison-metric__period-label">Период А</span>
-        </div>
-        <div className="comparison-metric__col">
-          <span className="comparison-metric__value">{b.toLocaleString('ru-RU')} ₽</span>
-          <span className="comparison-metric__period-label">Период Б</span>
-        </div>
+      <div className="comparison-metric__header">
+        <span className="comparison-metric__label">{label}</span>
         <span className={`comparison-metric__delta${deltaClass}`}>{formatDelta(a, b)}</span>
+      </div>
+      <div className="comparison-metric__period-row">
+        <span className="comparison-metric__period-label">Период А</span>
+        <span className="comparison-metric__value">{a.toLocaleString('ru-RU')} ₽</span>
+      </div>
+      <div className="comparison-metric__period-row">
+        <span className="comparison-metric__period-label">Период Б</span>
+        <span className="comparison-metric__value">{b.toLocaleString('ru-RU')} ₽</span>
       </div>
     </div>
   )
@@ -853,6 +853,23 @@ export default function HomeScreen() {
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
   const [openSheet, setOpenSheet] = useState<TransactionType | null>(null)
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrollTopState, setScrollTopState] = useState<'hidden' | 'visible' | 'hiding'>('hidden')
+
+  const handleScroll = () => {
+    const scrolled = (scrollRef.current?.scrollTop ?? 0) > 300
+    setScrollTopState(prev => {
+      if (scrolled && prev === 'hidden') return 'visible'
+      if (!scrolled && prev === 'visible') return 'hiding'
+      return prev
+    })
+  }
+
+  useEffect(() => {
+    if (scrollTopState !== 'hiding') return
+    const t = setTimeout(() => setScrollTopState('hidden'), 200)
+    return () => clearTimeout(t)
+  }, [scrollTopState])
 
   useEffect(() => {
     const now = new Date()
@@ -919,7 +936,7 @@ export default function HomeScreen() {
         onExpenseClick={() => setOpenSheet(TransactionType.expense)}
         onIncomeClick={() => setOpenSheet(TransactionType.income)}
       />
-      <div className="home__tx-scroll" data-scroll="true">
+      <div className="home__tx-scroll" data-scroll="true" ref={scrollRef} onScroll={handleScroll}>
         <div className="home__transactions">
           {[...grouped.entries()].map(([dateKey, txs]) => (
             <div key={dateKey} className="tx-group">
@@ -952,6 +969,17 @@ export default function HomeScreen() {
 
       {analyticsOpen && (
         <AnalyticsSheet categories={categories} onClose={() => setAnalyticsOpen(false)} />
+      )}
+
+      {scrollTopState !== 'hidden' && (
+        <button
+          type="button"
+          className={`scroll-top-btn${scrollTopState === 'hiding' ? ' scroll-top-btn--hiding' : ''}`}
+          aria-label="Наверх"
+          onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <Icons.ChevronUp size={20} />
+        </button>
       )}
 
       {selectedTx && openSheet === null && (
