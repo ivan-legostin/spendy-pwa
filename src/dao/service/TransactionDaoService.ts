@@ -39,6 +39,26 @@ export async function getTransactionsByMonth(year: number, month: number): Promi
 }
 
 /**
+ * Получить транзакции за указанный период из БД.
+ *
+ * @param startYear год начала периода.
+ * @param startMonth номер месяца начала периода (1–12).
+ * @param endYear год конца периода.
+ * @param endMonth номер месяца конца периода (1–12).
+ * @returns promise, завершающийся списком транзакций за период.
+ */
+export async function getTransactionsByPeriod(
+  startYear: number, startMonth: number,
+  endYear: number, endMonth: number,
+): Promise<Transaction[]> {
+  const start = Date.UTC(startYear, startMonth - 1, 1)
+  const end = Date.UTC(endYear, endMonth, 1)
+  const range = IDBKeyRange.bound(start, end, false, true)
+  const connection = await getConnection()
+  return connection.getAllFromIndex('transactions', 'date', range)
+}
+
+/**
  * Удалить транзакцию из БД по идентификатору.
  *
  * @param id идентификатор транзакции.

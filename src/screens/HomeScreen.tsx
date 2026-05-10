@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { PieChart, Pie, ResponsiveContainer } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
-import { getTransactionsByMonth, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
+import { getTransactionsByMonth, getTransactionsByPeriod, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
@@ -507,6 +507,194 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
   )
 }
 
+function isPeriodValid(p: { fromYear: number; fromMonth: number; toYear: number; toMonth: number }): boolean {
+  return p.toYear > p.fromYear || (p.toYear === p.fromYear && p.toMonth >= p.fromMonth)
+}
+
+interface PeriodStats {
+  income: number
+  expense: number
+}
+
+function calcStats(txs: Transaction[], categoryMap: Map<string, Category>): PeriodStats {
+  let income = 0, expense = 0
+  for (const tx of txs) {
+    if (categoryMap.get(tx.categoryId)?.type === TransactionType.income) income += tx.amount
+    else expense += tx.amount
+  }
+  return { income, expense }
+}
+
+function formatDelta(a: number, b: number): string {
+  const delta = b - a
+  if (delta === 0) return '—'
+  const sign = delta > 0 ? '+' : '−'
+  const abs = Math.abs(delta).toLocaleString('ru-RU')
+  if (a === 0) return `${sign}${abs} ₽`
+  const pct = Math.round(Math.abs(delta / a) * 100)
+  return `${sign}${abs} ₽ / ${sign}${pct}%`
+}
+
+function ComparisonMetric({ label, a, b, positiveWhenHigher }: Readonly<{
+  label: string
+  a: number
+  b: number
+  positiveWhenHigher: boolean
+}>) {
+  const delta = b - a
+  const isPositive = positiveWhenHigher ? delta > 0 : delta < 0
+  const deltaClass = delta !== 0 ? ` comparison-metric__delta--${isPositive ? 'pos' : 'neg'}` : ''
+  return (
+    <div className="comparison-metric">
+      <span className="comparison-metric__label">{label}</span>
+      <div className="comparison-metric__row">
+        <div className="comparison-metric__col">
+          <span className="comparison-metric__value">{a.toLocaleString('ru-RU')} ₽</span>
+          <span className="comparison-metric__period-label">Период А</span>
+        </div>
+        <div className="comparison-metric__col">
+          <span className="comparison-metric__value">{b.toLocaleString('ru-RU')} ₽</span>
+          <span className="comparison-metric__period-label">Период Б</span>
+        </div>
+        <span className={`comparison-metric__delta${deltaClass}`}>{formatDelta(a, b)}</span>
+      </div>
+    </div>
+  )
+}
+
+function PeriodRangeSelector({ label, fromYear, fromMonth, toYear, toMonth, onFromChange, onToChange }: Readonly<{
+  label: string
+  fromYear: number
+  fromMonth: number
+  toYear: number
+  toMonth: number
+  onFromChange: (year: number, month: number) => void
+  onToChange: (year: number, month: number) => void
+}>) {
+  return (
+    <div className="period-range">
+      <span className="period-range__label">{label}</span>
+      <div className="period-range__selectors">
+        <MonthSelector year={fromYear} month={fromMonth} onChange={onFromChange} />
+        <Icons.ArrowRight size={14} className="period-range__arrow" />
+        <MonthSelector year={toYear} month={toMonth} onChange={onToChange} />
+      </div>
+    </div>
+  )
+}
+
+function AnalyticsBlockCard({ icon, title, subtitle, onClick }: Readonly<{
+  icon: ReactNode
+  title: string
+  subtitle: string
+  onClick: () => void
+}>) {
+  return (
+    <button type="button" className="analytics-block" onClick={onClick}>
+      <div className="analytics-block__icon">{icon}</div>
+      <div className="analytics-block__info">
+        <span className="analytics-block__title">{title}</span>
+        <span className="analytics-block__subtitle">{subtitle}</span>
+      </div>
+      <Icons.ChevronRight size={18} className="analytics-block__chevron" />
+    </button>
+  )
+}
+
+function ComparisonSheet({ categories, onClose }: Readonly<{
+  categories: Category[]
+  onClose: () => void
+}>) {
+  const now = new Date()
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [periodA, setPeriodA] = useState({
+    fromYear: now.getFullYear() - 1, fromMonth: 1,
+    toYear: now.getFullYear() - 1, toMonth: now.getMonth() + 1,
+  })
+  const [periodB, setPeriodB] = useState({
+    fromYear: now.getFullYear(), fromMonth: 1,
+    toYear: now.getFullYear(), toMonth: now.getMonth() + 1,
+  })
+  const [statsA, setStatsA] = useState<PeriodStats | null>(null)
+  const [statsB, setStatsB] = useState<PeriodStats | null>(null)
+  const [loading, setLoading] = useState(true)
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+
+  useEffect(() => {
+    if (!isPeriodValid(periodA) || !isPeriodValid(periodB)) return
+    setLoading(true)
+    Promise.all([
+      getTransactionsByPeriod(periodA.fromYear, periodA.fromMonth, periodA.toYear, periodA.toMonth),
+      getTransactionsByPeriod(periodB.fromYear, periodB.fromMonth, periodB.toYear, periodB.toMonth),
+    ]).then(([txsA, txsB]) => {
+      setStatsA(calcStats(txsA, categoryMap))
+      setStatsB(calcStats(txsB, categoryMap))
+      setLoading(false)
+    })
+  }, [periodA, periodB, categoryMap])
+
+  const bothValid = isPeriodValid(periodA) && isPeriodValid(periodB)
+
+  return (
+    <BottomSheet withBackdrop zIndex={102} ariaLabel="Сравнение периодов" onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
+      <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
+        <h2 className="comparison-sheet__title">Сравнение периодов</h2>
+        <div className="comparison-periods">
+          <PeriodRangeSelector
+            label="Период А"
+            fromYear={periodA.fromYear} fromMonth={periodA.fromMonth}
+            toYear={periodA.toYear} toMonth={periodA.toMonth}
+            onFromChange={(y, m) => setPeriodA(p => ({ ...p, fromYear: y, fromMonth: m }))}
+            onToChange={(y, m) => setPeriodA(p => ({ ...p, toYear: y, toMonth: m }))}
+          />
+          <PeriodRangeSelector
+            label="Период Б"
+            fromYear={periodB.fromYear} fromMonth={periodB.fromMonth}
+            toYear={periodB.toYear} toMonth={periodB.toMonth}
+            onFromChange={(y, m) => setPeriodB(p => ({ ...p, fromYear: y, fromMonth: m }))}
+            onToChange={(y, m) => setPeriodB(p => ({ ...p, toYear: y, toMonth: m }))}
+          />
+        </div>
+        {!bothValid && (
+          <p className="comparison-sheet__error">Конечная дата не может быть раньше начальной</p>
+        )}
+        {bothValid && loading && (
+          <div className="comparison-sheet__loading">
+            <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+          </div>
+        )}
+        {bothValid && !loading && statsA && statsB && (
+          <div className="comparison-results">
+            <ComparisonMetric label="Доходы" a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
+            <ComparisonMetric label="Траты" a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
+            <ComparisonMetric label="Баланс" a={statsA.income - statsA.expense} b={statsB.income - statsB.expense} positiveWhenHigher={true} />
+          </div>
+        )}
+      </div>
+    </BottomSheet>
+  )
+}
+
+function AnalyticsSheet({ categories, onClose }: Readonly<{ categories: Category[]; onClose: () => void }>) {
+  const [comparisonOpen, setComparisonOpen] = useState(false)
+  return (
+    <>
+      <BottomSheet withBackdrop ariaLabel="Аналитика" onClose={onClose} className="analytics-sheet">
+        <h2 className="analytics-sheet__title">Аналитика</h2>
+        <AnalyticsBlockCard
+          icon={<Icons.ArrowLeftRight size={20} />}
+          title="Сравнение периодов"
+          subtitle="Сравните доходы и расходы за два периода"
+          onClick={() => setComparisonOpen(true)}
+        />
+      </BottomSheet>
+      {comparisonOpen && (
+        <ComparisonSheet categories={categories} onClose={() => setComparisonOpen(false)} />
+      )}
+    </>
+  )
+}
+
 /**
  * Главный экран приложения.
  */
@@ -515,6 +703,7 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([])
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
   const [openSheet, setOpenSheet] = useState<TransactionType | null>(null)
+  const [analyticsOpen, setAnalyticsOpen] = useState(false)
 
   useEffect(() => {
     const now = new Date()
@@ -569,7 +758,12 @@ export default function HomeScreen() {
 
   return (
     <div className="home">
-      <h1 className="home__title">Главная</h1>
+      <div className="home__header">
+        <h1 className="home__title">Главная</h1>
+        <button type="button" className="home__analytics-btn" aria-label="Аналитика" onClick={() => setAnalyticsOpen(true)}>
+          <Icons.BarChart2 size={22} />
+        </button>
+      </div>
       <SummaryCard
         income={totalIncome}
         spent={totalSpent}
@@ -605,6 +799,10 @@ export default function HomeScreen() {
           onDeleted={handleDeleted}
           onUpdated={handleUpdated}
         />
+      )}
+
+      {analyticsOpen && (
+        <AnalyticsSheet categories={categories} onClose={() => setAnalyticsOpen(false)} />
       )}
 
       {selectedTx && openSheet === null && (
