@@ -4,10 +4,10 @@
   left: 0;
   right: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   background: #1c1c1e;
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.08);
-  padding: 8px 16px 24px;
+  padding: 16px;
   -webkit-tap-highlight-color: transparent;
   overflow: visible;
 }
@@ -51,6 +51,16 @@
 
 .bottom-nav__link.active .bottom-nav__fab-icon svg {
   color: #ffffff;
+}
+
+.bottom-nav__label {
+  font-size: 11px;
+  color: #6b7280;
+  transition: color 0.1s ease;
+}
+
+.bottom-nav__link.active .bottom-nav__label {
+  color: #2D7FF9;
 }
 
 .bottom-nav__fab-icon {

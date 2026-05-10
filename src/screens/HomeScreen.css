@@ -276,7 +276,7 @@
 
 /* Top Transactions Sheet */
 .top-tx-sheet {
-  height: 85dvh;
+  height: 90dvh;
   display: flex;
   flex-direction: column;
 }

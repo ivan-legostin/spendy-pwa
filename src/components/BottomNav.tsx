@@ -12,6 +12,7 @@ export default function BottomNav() {
         <div className="bottom-nav__icon">
           <Home size={30} />
         </div>
+        <span className="bottom-nav__label">Главная</span>
       </NavLink>
 
       <NavLink
@@ -31,6 +32,7 @@ export default function BottomNav() {
         <div className="bottom-nav__icon">
           <Settings size={30} />
         </div>
+        <span className="bottom-nav__label">Настройки</span>
       </NavLink>
     </nav>
   )
