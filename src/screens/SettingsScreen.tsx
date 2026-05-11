@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 import { getAllCategories } from '../dao/service/CategoryDaoService';
 import { saveCategories } from '../dao/service/CategoryDaoService.ts';
-import { saveTransactions, clearTransactions } from '../dao/service/TransactionDaoService.ts';
+import { saveTransactions, clearTransactions, getAllTransactions } from '../dao/service/TransactionDaoService.ts';
+import { exportToCsv } from '../utils/CsvExporter';
 import { parseCsv } from '../utils/CsvParser';
 import './SettingsScreen.css';
 
@@ -45,6 +46,14 @@ export default function SettingsScreen() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  async function handleExport() {
+    const [transactions, categories] = await Promise.all([
+      getAllTransactions(),
+      getAllCategories(),
+    ]);
+    exportToCsv(transactions, categories);
+  }
+
   async function processImport(file: File, replace: boolean) {
     setPendingFile(null);
     const text = await file.text();
@@ -78,18 +87,27 @@ export default function SettingsScreen() {
             <span className="settings__item-description">Загрузить транзакции из файла</span>
           </div>
           <div className="settings__item-icon settings__item-icon--green">
-            <Download size={22} color="#fff" />
+            <Download size={22} color="#fff"/>
+          </div>
+        </button>
+        <button className="settings__item" onClick={handleExport}>
+          <div className="settings__item-text">
+            <span className="settings__item-label">Экспортировать CSV</span>
+            <span className="settings__item-description">Сохранить транзакции в файл</span>
+          </div>
+          <div className="settings__item-icon settings__item-icon--green">
+            <Upload size={22} color="#fff"/>
           </div>
         </button>
       </div>
       {status && <p className="settings__status">{status}</p>}
 
       {pendingFile && (
-        <ImportDialog
-          onReplace={() => processImport(pendingFile, true)}
-          onAppend={() => processImport(pendingFile, false)}
-          onCancel={() => setPendingFile(null)}
-        />
+          <ImportDialog
+              onReplace={() => processImport(pendingFile, true)}
+              onAppend={() => processImport(pendingFile, false)}
+              onCancel={() => setPendingFile(null)}
+          />
       )}
     </div>
   );
