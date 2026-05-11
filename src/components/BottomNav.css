@@ -32,8 +32,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: transform, filter;
-  transition: transform 0.1s ease, filter 0.1s ease;
+  will-change: filter;
+  transition: filter 0.1s ease;
 }
 
 .bottom-nav__link svg {
@@ -41,7 +41,6 @@
 }
 
 .bottom-nav__link.active .bottom-nav__icon {
-  transform: scale(1.2);
   filter: drop-shadow(0 0 6px #2D7FF9);
 }
 
@@ -64,19 +63,17 @@
 }
 
 .bottom-nav__fab-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #2D7FF9;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.1s ease;
 }
 
 .bottom-nav__link.active .bottom-nav__fab-icon {
-  transform: scale(1.2);
   box-shadow: 0 0 10px #2D7FF9;
 }
 
