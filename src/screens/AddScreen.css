@@ -3,6 +3,8 @@
   flex-direction: column;
   height: 100dvh;
   padding-bottom: 100px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
 .add__top {

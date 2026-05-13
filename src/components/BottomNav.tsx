@@ -5,6 +5,7 @@ import './BottomNav.css'
 export default function BottomNav() {
   return (
     <nav className="bottom-nav">
+      <div className="bottom-nav__inner">
       <NavLink
         to="/"
         className={({ isActive }) => `bottom-nav__link${isActive ? ' active' : ''}`}
@@ -34,6 +35,7 @@ export default function BottomNav() {
         </div>
         <span className="bottom-nav__label">Настройки</span>
       </NavLink>
+      </div>
     </nav>
   )
 }
