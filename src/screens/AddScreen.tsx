@@ -37,9 +37,9 @@ function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onS
     <BottomSheet ariaLabel="Выбор даты" onClose={onClose} withBackdrop>
       <div className="calendar">
         <div className="calendar__header">
-          <button className="calendar__nav" onPointerDown={() => setViewDate(new Date(year, month - 1, 1))}>‹</button>
+          <button className="calendar__nav" onClick={() => setViewDate(new Date(year, month - 1, 1))}>‹</button>
           <span className="calendar__month">{monthLabel}</span>
-          <button className="calendar__nav" onPointerDown={() => setViewDate(new Date(year, month + 1, 1))}>›</button>
+          <button className="calendar__nav" onClick={() => setViewDate(new Date(year, month + 1, 1))}>›</button>
         </div>
         <div className="calendar__weekdays">
           {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'].map(d => (
@@ -57,7 +57,7 @@ function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onS
                 day !== null && toDateStr(day) === todayStr && toDateStr(day) !== date ? 'calendar__day--today' : '',
               ].filter(Boolean).join(' ')}
               disabled={day === null}
-              onPointerDown={() => { if (day) onSelect(toDateStr(day)) }}
+              onClick={() => { if (day) onSelect(toDateStr(day)) }}
             >
               {day ?? ''}
             </button>
@@ -162,13 +162,13 @@ export default function AddScreen() {
         <div className="add__toggle">
           <button
             className={`add__toggle-btn${type === TransactionType.expense ? ' add__toggle-btn--active' : ''}`}
-            onPointerDown={() => handleTypeSwitch(TransactionType.expense)}
+            onClick={() => handleTypeSwitch(TransactionType.expense)}
           >
             Траты
           </button>
           <button
             className={`add__toggle-btn${type === TransactionType.income ? ' add__toggle-btn--active' : ''}`}
-            onPointerDown={() => handleTypeSwitch(TransactionType.income)}
+            onClick={() => handleTypeSwitch(TransactionType.income)}
           >
             Доходы
           </button>
@@ -182,7 +182,7 @@ export default function AddScreen() {
               <button
                 key={cat.id}
                 className={`category-item${isSelected ? ' category-item--selected' : ''}`}
-                onPointerDown={() => setSelectedCategory(cat)}
+                onClick={() => setSelectedCategory(cat)}
               >
                 <div
                   className="category-item__icon"
@@ -201,7 +201,7 @@ export default function AddScreen() {
         <div className="add__amount">{displayAmount} ₽</div>
 
         <div className="add__meta">
-          <button className="add__date-btn" onPointerDown={() => setCalendarOpen(true)}>
+          <button className="add__date-btn" onClick={() => setCalendarOpen(true)}>
             <Icons.CalendarDays size={20} color="#94a3b8" />
           </button>
           <input
@@ -218,7 +218,7 @@ export default function AddScreen() {
         <button
           className={`add__save${saveSuffix}`}
           disabled={!canSave && !saved}
-          onPointerDown={handleSave}
+          onClick={handleSave}
         >
           Сохранить
         </button>

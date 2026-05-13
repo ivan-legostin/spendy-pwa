@@ -17,13 +17,13 @@ function ImportDialog({ onReplace, onAppend, onCancel }: Readonly<{
       <h2 className="import-dialog__title">Импорт транзакций</h2>
       <p className="import-dialog__body">Что сделать с текущими транзакциями?</p>
       <div className="import-dialog__actions">
-        <button className="import-dialog__btn import-dialog__btn--danger" onPointerDown={onReplace}>
+        <button className="import-dialog__btn import-dialog__btn--danger" onClick={onReplace}>
           Заменить
         </button>
-        <button className="import-dialog__btn import-dialog__btn--primary" onPointerDown={onAppend}>
+        <button className="import-dialog__btn import-dialog__btn--primary" onClick={onAppend}>
           Добавить к существующим
         </button>
-        <button className="import-dialog__btn import-dialog__btn--cancel" onPointerDown={onCancel}>
+        <button className="import-dialog__btn import-dialog__btn--cancel" onClick={onCancel}>
           Отмена
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
             <Download size={22} color="#fff"/>
           </div>
         </button>
-        <button className="settings__item" onPointerDown={handleExport}>
+        <button className="settings__item" onClick={handleExport}>
           <div className="settings__item-text">
             <span className="settings__item-label">Экспортировать CSV</span>
             <span className="settings__item-description">Сохранить транзакции в файл</span>

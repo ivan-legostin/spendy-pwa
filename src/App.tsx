@@ -28,7 +28,7 @@ export default function App() {
       {needRefresh && (
         <div className="update-banner">
           <span>Доступно обновление</span>
-          <button onPointerDown={() => updateServiceWorker(true)}>Обновить</button>
+          <button onClick={() => updateServiceWorker(true)}>Обновить</button>
         </div>
       )}
     </div>
