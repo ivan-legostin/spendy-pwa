@@ -89,7 +89,7 @@ const BottomSheet = forwardRef<BottomSheetHandle, BottomSheetProps>(function Bot
 
   return (
     <>
-      {withBackdrop && <div aria-hidden="true" className={`bottom-sheet__backdrop${(isClosing || isBackdropClosing) ? ' bottom-sheet__backdrop--closing' : ''}`} style={zIndex != null ? { zIndex: zIndex - 1 } : undefined} onClick={handleClose} />}
+      {withBackdrop && <div aria-hidden="true" className={`bottom-sheet__backdrop${(isClosing || isBackdropClosing) ? ' bottom-sheet__backdrop--closing' : ''}`} style={zIndex != null ? { zIndex: zIndex - 1 } : undefined} onPointerDown={handleClose} />}
       <dialog
         ref={dialogRef}
         open

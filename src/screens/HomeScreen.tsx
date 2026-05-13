@@ -37,14 +37,14 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
 }>) {
   return (
     <div className="summary-card">
-      <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onExpenseClick}>
+      <button type="button" className="summary-card__tile summary-card__tile--clickable" onPointerDown={onExpenseClick}>
         <span className="summary-card__value">{spent.toLocaleString('ru-RU')} ₽</span>
         <div className="summary-card__footer">
           <span className="summary-card__label">Траты</span>
           <Icons.ChevronRight size={14} className="summary-card__chevron" />
         </div>
       </button>
-      <button type="button" className="summary-card__tile summary-card__tile--clickable" onClick={onIncomeClick}>
+      <button type="button" className="summary-card__tile summary-card__tile--clickable" onPointerDown={onIncomeClick}>
         <span className="summary-card__value">{income.toLocaleString('ru-RU')} ₽</span>
         <div className="summary-card__footer">
           <span className="summary-card__label">Доходы</span>
@@ -69,12 +69,12 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
   return (
     <BottomSheet withBackdrop zIndex={120} ariaLabel="Выбор месяца" onClose={onClose} className="month-picker-sheet">
       <div className="month-picker__header">
-        <button type="button" className="month-picker__arrow" onClick={() => setPickerYear(y => y - 1)}>‹</button>
+        <button type="button" className="month-picker__arrow" onPointerDown={() => setPickerYear(y => y - 1)}>‹</button>
         <span className="month-picker__year">{pickerYear}</span>
         <button
           type="button"
           className="month-picker__arrow"
-          onClick={() => setPickerYear(y => y + 1)}
+          onPointerDown={() => setPickerYear(y => y + 1)}
           disabled={pickerYear >= now.getFullYear()}
         >›</button>
       </div>
@@ -89,7 +89,7 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
               type="button"
               className={`month-picker__cell${isSelected ? ' month-picker__cell--selected' : ''}`}
               disabled={isDisabled}
-              onClick={() => { onChange(pickerYear, m); onClose() }}
+              onPointerDown={() => { onChange(pickerYear, m); onClose() }}
             >
               {name}
             </button>
@@ -110,7 +110,7 @@ function MonthSelector({ year, month, onChange }: Readonly<{
 
   return (
     <>
-      <button type="button" className="month-selector" onClick={() => setOpen(true)}>
+      <button type="button" className="month-selector" onPointerDown={() => setOpen(true)}>
         <span className="month-selector__label">{label}</span>
         <Icons.ChevronDown size={14} className="month-selector__chevron" />
       </button>
@@ -145,7 +145,7 @@ function TransactionItem({ transaction, category, onClick }: Readonly<{
     <button
       type="button"
       className={`transaction-item${onClick ? ' transaction-item--clickable' : ''}`}
-      onClick={onClick}
+      onPointerDown={onClick}
     >
       <div className="transaction-item__icon">
         <Icon size={24}/>
@@ -182,7 +182,7 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
 
   return (
     <>
-      <div aria-hidden="true" className="tx-sheet-overlay tx-sheet-overlay--top" onClick={() => sheetRef.current?.close()} />
+      <div aria-hidden="true" className="tx-sheet-overlay tx-sheet-overlay--top" onPointerDown={() => sheetRef.current?.close()} />
       <BottomSheet ref={sheetRef} withBackdrop zIndex={104} ariaLabel="Редактировать операцию" onClose={onClose} className="edit-tx-sheet">
       <form className="edit-tx-sheet__form" onSubmit={handleSubmit}>
         <h2 className="edit-tx-sheet__title">Редактировать</h2>
@@ -235,7 +235,7 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
           />
         </div>
         <div className="edit-tx-sheet__footer">
-          <button type="button" className="edit-tx-sheet__btn edit-tx-sheet__btn--cancel" onClick={onClose}>
+          <button type="button" className="edit-tx-sheet__btn edit-tx-sheet__btn--cancel" onPointerDown={onClose}>
             Отмена
           </button>
           <button type="submit" className="edit-tx-sheet__btn edit-tx-sheet__btn--save">
@@ -286,10 +286,10 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
             </span>
           </div>
           <div className="tx-detail-sheet__actions">
-            <button className="tx-detail-sheet__btn tx-detail-sheet__btn--edit" onClick={() => setIsEditing(true)}>
+            <button className="tx-detail-sheet__btn tx-detail-sheet__btn--edit" onPointerDown={() => setIsEditing(true)}>
               Редактировать
             </button>
-            <button className="tx-detail-sheet__btn tx-detail-sheet__btn--delete" onClick={handleDelete}>
+            <button className="tx-detail-sheet__btn tx-detail-sheet__btn--delete" onPointerDown={handleDelete}>
               Удалить
             </button>
           </div>
@@ -395,7 +395,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
                 key={tx.id}
                 type="button"
                 className="breakdown-tx-item"
-                onClick={() => setSelectedTx(tx)}
+                onPointerDown={() => setSelectedTx(tx)}
               >
                 <div className="breakdown-tx-item__left">
                   <span className="breakdown-tx-item__date">{formatDate(tx.date)}</span>
@@ -454,7 +454,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
                 key={entry.categoryId}
                 type="button"
                 className="breakdown-sheet__legend-item"
-                onClick={() => scrollToCategory(entry.categoryId)}
+                onPointerDown={() => scrollToCategory(entry.categoryId)}
               >
                 <span className="breakdown-sheet__legend-dot" style={{ background: entry.fill }} />
                 <span className="breakdown-sheet__legend-name">{entry.name}</span>
@@ -583,7 +583,7 @@ function AnalyticsBlockCard({ icon, title, subtitle, onClick }: Readonly<{
   onClick: () => void
 }>) {
   return (
-    <button type="button" className="analytics-block" onClick={onClick}>
+    <button type="button" className="analytics-block" onPointerDown={onClick}>
       <div className="analytics-block__icon">{icon}</div>
       <div className="analytics-block__info">
         <span className="analytics-block__title">{title}</span>
@@ -679,9 +679,9 @@ function YearSelector({ year, onChange }: Readonly<{ year: number; onChange: (ye
   const maxYear = new Date().getFullYear()
   return (
     <div className="year-selector">
-      <button type="button" className="year-selector__arrow" onClick={() => onChange(year - 1)}>‹</button>
+      <button type="button" className="year-selector__arrow" onPointerDown={() => onChange(year - 1)}>‹</button>
       <span className="year-selector__label">{year}</span>
-      <button type="button" className="year-selector__arrow" disabled={year >= maxYear} onClick={() => onChange(year + 1)}>›</button>
+      <button type="button" className="year-selector__arrow" disabled={year >= maxYear} onPointerDown={() => onChange(year + 1)}>›</button>
     </div>
   )
 }
@@ -748,7 +748,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
                 <button
                   type="button"
                   className={`top-tx-filter-btn${excludedCategories.size > 0 ? ' top-tx-filter-btn--active' : ''}`}
-                  onClick={() => setFilterOpen(o => !o)}
+                  onPointerDown={() => setFilterOpen(o => !o)}
                 >
                   <Icons.SlidersHorizontal size={15} />
                   {excludedCategories.size > 0 && (
@@ -760,13 +760,13 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
               )}
               {filterOpen && (
                 <>
-                  <div aria-hidden="true" className="top-tx-dropdown-overlay" onClick={() => setFilterOpen(false)} />
+                  <div aria-hidden="true" className="top-tx-dropdown-overlay" onPointerDown={() => setFilterOpen(false)} />
                   <div className="top-tx-dropdown">
                     {availableCategories.map(cat => {
                       const Icon = (Icons[cat.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
                       const isActive = !excludedCategories.has(cat.id)
                       return (
-                        <button key={cat.id} type="button" className="top-tx-dropdown-item" onClick={() => toggleCategory(cat.id)}>
+                        <button key={cat.id} type="button" className="top-tx-dropdown-item" onPointerDown={() => toggleCategory(cat.id)}>
                           <Icon size={15} />
                           <span className="top-tx-dropdown-item__name">{cat.title}</span>
                           {isActive && <Icons.Check size={15} className="top-tx-dropdown-item__check" />}
@@ -794,7 +794,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
               const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
               const type = category?.type ?? TransactionType.expense
               return (
-                <button key={tx.id} type="button" className="top-tx-item" onClick={() => setSelectedTx(tx)}>
+                <button key={tx.id} type="button" className="top-tx-item" onPointerDown={() => setSelectedTx(tx)}>
                   <span className="top-tx-item__rank">#{i + 1}</span>
                   <div className="top-tx-item__icon">
                     <Icon size={20} />
@@ -947,7 +947,7 @@ export default function HomeScreen() {
     <div className="home">
       <div className="home__header">
         <h1 className="home__title">Главная</h1>
-        <button type="button" className="home__analytics-btn" aria-label="Аналитика" onClick={() => setAnalyticsOpen(true)}>
+        <button type="button" className="home__analytics-btn" aria-label="Аналитика" onPointerDown={() => setAnalyticsOpen(true)}>
           <Icons.BarChart2 size={22} />
         </button>
       </div>
@@ -997,7 +997,7 @@ export default function HomeScreen() {
           type="button"
           className={`scroll-top-btn${scrollTopState === 'hiding' ? ' scroll-top-btn--hiding' : ''}`}
           aria-label="Наверх"
-          onClick={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          onPointerDown={() => scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <Icons.ChevronUp size={20} />
         </button>
