@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Spendy',
         short_name: 'Spendy',
         description: 'Personal finance tracker',
-        theme_color: '#2D7FF9',
+        theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
         scope: '/spendy-pwa/',
