@@ -145,6 +145,10 @@ export default function AddScreen() {
     setTimeout(() => setSaved(false), 1000)
   }
 
+  let saveSuffix = ''
+  if (saved) saveSuffix = ' add__save--saved'
+  else if (canSave) saveSuffix = ' add__save--active'
+
   const displayAmount = (() => {
     const raw = amount === '' ? '0' : amount
     const [int, dec] = raw.split('.')
@@ -212,7 +216,7 @@ export default function AddScreen() {
         <NumPad onPress={handleNumpad} />
 
         <button
-          className={`add__save${saved ? ' add__save--saved' : canSave ? ' add__save--active' : ''}`}
+          className={`add__save${saveSuffix}`}
           disabled={!canSave && !saved}
           onPointerDown={handleSave}
         >

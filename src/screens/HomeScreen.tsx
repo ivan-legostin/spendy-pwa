@@ -553,7 +553,8 @@ function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHighe
 }>) {
   const delta = b - a
   const isPositive = positiveWhenHigher ? delta > 0 : delta < 0
-  const deltaClass = delta !== 0 ? ` comparison-metric__delta--${isPositive ? 'pos' : 'neg'}` : ''
+  const sign = isPositive ? 'pos' : 'neg'
+  const deltaClass = delta !== 0 ? ` comparison-metric__delta--${sign}` : ''
   return (
     <div className="comparison-metric">
       <div className="comparison-metric__header">
@@ -736,6 +737,49 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
       return next
     })
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="comparison-sheet__loading">
+          <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+        </div>
+      )
+    }
+    if (allExpenses.length === 0) {
+      return <div className="breakdown-sheet__empty">Нет операций за этот период</div>
+    }
+    if (topTransactions.length === 0) {
+      return <div className="breakdown-sheet__empty">Все категории скрыты фильтром</div>
+    }
+    return (
+      <div className="top-tx-list" ref={scrollRef} data-scroll="true">
+        {topTransactions.map((tx, i) => {
+          const category = categoryMap.get(tx.categoryId)
+          const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+          const type = category?.type ?? TransactionType.expense
+          return (
+            <button key={tx.id} type="button" className="top-tx-item" onPointerDown={() => setSelectedTx(tx)}>
+              <span className="top-tx-item__rank">#{i + 1}</span>
+              <div className="top-tx-item__icon">
+                <Icon size={20} />
+              </div>
+              <div className="top-tx-item__info">
+                <span className="top-tx-item__category">{category?.title ?? '—'}</span>
+                {tx.note && <span className="top-tx-item__note">{tx.note}</span>}
+              </div>
+              <div className="top-tx-item__right">
+                <span className={`top-tx-item__amount top-tx-item__amount--${type}`}>
+                  {formatAmount(tx.amount, type)}
+                </span>
+                <span className="top-tx-item__date">{formatDate(tx.date)}</span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <>
       <BottomSheet withBackdrop zIndex={102} ariaLabel="Топ 10 трат" onClose={onClose} scrollableRef={scrollRef} className="top-tx-sheet">
@@ -779,41 +823,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
             </div>
           </div>
         </div>
-        {loading ? (
-          <div className="comparison-sheet__loading">
-            <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
-          </div>
-        ) : allExpenses.length === 0 ? (
-          <div className="breakdown-sheet__empty">Нет операций за этот период</div>
-        ) : topTransactions.length === 0 ? (
-          <div className="breakdown-sheet__empty">Все категории скрыты фильтром</div>
-        ) : (
-          <div className="top-tx-list" ref={scrollRef} data-scroll="true">
-            {topTransactions.map((tx, i) => {
-              const category = categoryMap.get(tx.categoryId)
-              const Icon = (Icons[category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
-              const type = category?.type ?? TransactionType.expense
-              return (
-                <button key={tx.id} type="button" className="top-tx-item" onPointerDown={() => setSelectedTx(tx)}>
-                  <span className="top-tx-item__rank">#{i + 1}</span>
-                  <div className="top-tx-item__icon">
-                    <Icon size={20} />
-                  </div>
-                  <div className="top-tx-item__info">
-                    <span className="top-tx-item__category">{category?.title ?? '—'}</span>
-                    {tx.note && <span className="top-tx-item__note">{tx.note}</span>}
-                  </div>
-                  <div className="top-tx-item__right">
-                    <span className={`top-tx-item__amount top-tx-item__amount--${type}`}>
-                      {formatAmount(tx.amount, type)}
-                    </span>
-                    <span className="top-tx-item__date">{formatDate(tx.date)}</span>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
+        {renderContent()}
       </BottomSheet>
       {selectedTx && (
         <TransactionDetailSheet
