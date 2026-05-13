@@ -17,11 +17,11 @@ export default function BottomNav() {
 
       <NavLink
         to="/add"
-        className={({ isActive }) => `bottom-nav__link${isActive ? ' active' : ''}`}
+        className={({ isActive }) => `bottom-nav__link bottom-nav__link--fab${isActive ? ' active' : ''}`}
         aria-label="Добавить транзакцию"
       >
         <div className="bottom-nav__fab-icon">
-          <Plus size={22} strokeWidth={2} />
+          <Plus size={26} strokeWidth={2} />
         </div>
       </NavLink>
 

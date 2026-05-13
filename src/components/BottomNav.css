@@ -52,6 +52,10 @@
   color: #ffffff;
 }
 
+.bottom-nav__link--fab {
+  transform: translateY(-5px);
+}
+
 .bottom-nav__label {
   font-size: 11px;
   color: #6b7280;
@@ -63,17 +67,18 @@
 }
 
 .bottom-nav__fab-icon {
-  width: 48px;
-  height: 48px;
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
   background: #2D7FF9;
   color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 18px rgba(45, 127, 249, 0.55);
 }
 
 .bottom-nav__link.active .bottom-nav__fab-icon {
-  box-shadow: 0 0 10px #2D7FF9;
+  box-shadow: 0 0 28px rgba(45, 127, 249, 0.85);
 }
 
