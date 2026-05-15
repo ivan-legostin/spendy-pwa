@@ -81,24 +81,31 @@ export default function SettingsScreen() {
       />
       <h1 className="settings__title">Настройки</h1>
       <div className="settings__list">
-        <button className="settings__item" onClick={() => fileInputRef.current?.click()}>
-          <div className="settings__item-text">
-            <span className="settings__item-label">Импортировать CSV</span>
-            <span className="settings__item-description">Загрузить транзакции из файла</span>
+        <div className="settings__section">
+          <div className="settings__group">
+            <div className="settings__section-header">
+              <h2 className="settings__section-title">Файлы</h2>
+            </div>
+            <button className="settings__item" onClick={() => fileInputRef.current?.click()}>
+              <div className="settings__item-icon settings__item-icon--green">
+                <Download size={22} color="#fff"/>
+              </div>
+              <div className="settings__item-text">
+                <span className="settings__item-label">Импортировать CSV</span>
+                <span className="settings__item-description">Загрузить транзакции из файла</span>
+              </div>
+            </button>
+            <button className="settings__item" onClick={handleExport}>
+              <div className="settings__item-icon settings__item-icon--green">
+                <Upload size={22} color="#fff"/>
+              </div>
+              <div className="settings__item-text">
+                <span className="settings__item-label">Экспортировать CSV</span>
+                <span className="settings__item-description">Сохранить транзакции в файл</span>
+              </div>
+            </button>
           </div>
-          <div className="settings__item-icon settings__item-icon--green">
-            <Download size={22} color="#fff"/>
-          </div>
-        </button>
-        <button className="settings__item" onClick={handleExport}>
-          <div className="settings__item-text">
-            <span className="settings__item-label">Экспортировать CSV</span>
-            <span className="settings__item-description">Сохранить транзакции в файл</span>
-          </div>
-          <div className="settings__item-icon settings__item-icon--green">
-            <Upload size={22} color="#fff"/>
-          </div>
-        </button>
+        </div>
       </div>
       {status && <p className="settings__status">{status}</p>}
 
