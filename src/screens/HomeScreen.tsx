@@ -12,7 +12,7 @@ import './HomeScreen.css'
 
 function formatAmount(amount: number, type: TransactionType): string {
   const formatted = amount.toLocaleString('ru-RU')
-  return type === TransactionType.expense ? `-${formatted} ₽` : `${formatted} ₽`
+  return type === TransactionType.expense ? `-${formatted} ₽` : `+${formatted} ₽`
 }
 
 function formatDate(timestamp: number): string {
