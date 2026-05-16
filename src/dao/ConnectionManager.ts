@@ -4,7 +4,7 @@ import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
-const DB_VERSION = 6;
+const DB_VERSION = 5;
 
 const DEFAULT_CATEGORIES: Category[] = [
   // Категории расходов
@@ -83,10 +83,6 @@ export function getConnection(): Promise<IDBPDatabase> {
               await store.put({ ...tx, date: new Date(tx.date).getTime() });
             }
           }
-        }
-
-        if (oldVersion < 6) {
-          connection.createObjectStore('settings', { keyPath: 'key' });
         }
       },
     });
