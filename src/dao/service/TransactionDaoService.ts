@@ -1,5 +1,6 @@
 import { Transaction } from '../models/Transaction.ts';
 import { getConnection } from '../ConnectionManager.ts';
+import { autoSave } from './FileSystemService.ts';
 
 /**
  * Сохранить список транзакций в БД.
@@ -11,6 +12,7 @@ export async function saveTransactions(entities: Transaction[]): Promise<void> {
   const connection = await getConnection();
   const transaction = connection.transaction('transactions', 'readwrite');
   await Promise.all([...entities.map(e => transaction.store.put(e)), transaction.done]);
+  void autoSave();
 }
 
 /**
@@ -67,6 +69,7 @@ export async function getTransactionsByPeriod(
 export async function deleteTransaction(id: string): Promise<void> {
   const connection = await getConnection();
   await connection.delete('transactions', id);
+  void autoSave();
 }
 
 /**
@@ -78,6 +81,7 @@ export async function deleteTransaction(id: string): Promise<void> {
 export async function updateTransaction(entity: Transaction): Promise<void> {
   const connection = await getConnection();
   await connection.put('transactions', entity);
+  void autoSave();
 }
 
 /**
@@ -88,4 +92,5 @@ export async function updateTransaction(entity: Transaction): Promise<void> {
 export async function clearTransactions(): Promise<void> {
   const connection = await getConnection();
   await connection.clear('transactions');
+  void autoSave();
 }

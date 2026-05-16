@@ -10,12 +10,13 @@ function formatDate(timestamp: number): string {
 }
 
 /**
- * Сформировать CSV-файл из транзакций и инициировать его скачивание.
+ * Сформировать CSV-строку из транзакций.
  *
- * @param transactions список транзакций для экспорта.
+ * @param transactions список транзакций.
  * @param categories список всех категорий.
+ * @returns строка в формате CSV.
  */
-export function exportToCsv(transactions: Transaction[], categories: Category[]): void {
+export function buildCsv(transactions: Transaction[], categories: Category[]): string {
   const categoryMap = new Map(categories.map(c => [c.id, c]));
   const sorted = [...transactions].sort((a, b) => b.date - a.date);
 
@@ -32,7 +33,17 @@ export function exportToCsv(transactions: Transaction[], categories: Category[])
     ].map(v => `"${v}"`).join(',');
   });
 
-  const csv = ['Дата,Название,Сумма,Категория,Тип,Комментарий', ...rows].join('\n');
+  return ['Дата,Название,Сумма,Категория,Тип,Комментарий', ...rows].join('\n');
+}
+
+/**
+ * Сформировать CSV-файл из транзакций и инициировать его скачивание.
+ *
+ * @param transactions список транзакций для экспорта.
+ * @param categories список всех категорий.
+ */
+export function exportToCsv(transactions: Transaction[], categories: Category[]): void {
+  const csv = buildCsv(transactions, categories);
 
   const today = new Date();
   const yyyy = today.getFullYear();

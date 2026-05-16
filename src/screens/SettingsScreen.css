@@ -91,8 +91,24 @@
   margin-left: 6px;
 }
 
-.settings__item-icon--green {
+.settings__item-icon--blue {
   background: #2D7FF9;
+}
+
+.settings__item-icon--gray {
+  background: #636366;
+}
+
+.settings__item-icon--orange {
+  background: #f59e0b;
+}
+
+.settings__item--static {
+  cursor: default;
+}
+
+.settings__item-description--error {
+  color: #ef4444;
 }
 
 .settings__status {
