@@ -96,9 +96,11 @@ function calcMonthSums(transactions: Transaction[], categoryMap: Map<string, Cat
   return sums
 }
 
-function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
+function MonthPickerSheet({ year, month, type, onClose, onChange }: Readonly<{
   year: number
   month: number
+  /** Если задан, в ячейках показываются суммы только этого типа операций; иначе — и доходы, и расходы. */
+  type?: TransactionType
   onClose: () => void
   onChange: (year: number, month: number) => void
 }>) {
@@ -140,6 +142,8 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
           const isSelected = pickerYear === year && m === month
           const isDisabled = pickerYear > now.getFullYear() || (pickerYear === now.getFullYear() && m > now.getMonth() + 1)
           const sums = monthSums.get(m)
+          const showIncome = sums && sums.income > 0 && type !== TransactionType.expense
+          const showExpense = sums && sums.expense > 0 && type !== TransactionType.income
           return (
             <button
               key={m}
@@ -149,12 +153,12 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
               onClick={() => { onChange(pickerYear, m); onClose() }}
             >
               <span className="month-picker__cell-name">{name}</span>
-              {sums && (sums.expense > 0 || sums.income > 0) && (
+              {(showIncome || showExpense) && (
                 <span className="month-picker__cell-sums">
-                  {sums.income > 0 && (
+                  {showIncome && (
                       <span className="month-picker__cell-sum month-picker__cell-sum--income">+{formatCompactAmount(sums.income)}</span>
                   )}
-                  {sums.expense > 0 && (
+                  {showExpense && (
                     <span className="month-picker__cell-sum month-picker__cell-sum--expense">−{formatCompactAmount(sums.expense)}</span>
                   )}
                 </span>
@@ -167,9 +171,11 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
   )
 }
 
-function MonthSelector({ year, month, onChange }: Readonly<{
+function MonthSelector({ year, month, type, onChange }: Readonly<{
   year: number
   month: number
+  /** Тип операций, суммы которых показывать в пикере. Если не задан — показываются и доходы, и расходы. */
+  type?: TransactionType
   onChange: (year: number, month: number) => void
 }>) {
   const [open, setOpen] = useState(false)
@@ -185,6 +191,7 @@ function MonthSelector({ year, month, onChange }: Readonly<{
         <MonthPickerSheet
           year={year}
           month={month}
+          type={type}
           onClose={() => setOpen(false)}
           onChange={onChange}
         />
@@ -545,6 +552,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
           <MonthSelector
             year={selectedYear}
             month={selectedMonth}
+            type={type}
             onChange={(y, m) => { setSelectedYear(y); setSelectedMonth(m) }}
           />
         </div>
