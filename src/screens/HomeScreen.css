@@ -947,7 +947,13 @@
 }
 
 .month-picker__cell {
-  height: 52px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 2px;
   border: none;
   border-radius: 12px;
   background: #2c2c2e;
@@ -960,9 +966,38 @@
   transition: background 0.15s;
 }
 
+.month-picker__cell-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.month-picker__cell-sums {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.25;
+}
+
+.month-picker__cell-sum {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.month-picker__cell-sum--expense {
+  color: #8e8e93;
+}
+
+.month-picker__cell-sum--income {
+  color: #4ade80;
+}
+
 .month-picker__cell:disabled {
   color: #3a3a3c;
   cursor: default;
+}
+
+.month-picker__cell:disabled .month-picker__cell-sum {
+  opacity: 0.4;
 }
 
 .month-picker__cell--selected {

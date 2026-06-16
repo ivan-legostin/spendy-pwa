@@ -7,12 +7,24 @@ import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
 import { getTransactionsByMonth, getTransactionsByPeriod, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
+import CurrentYearDataContext, { useCurrentYearData } from '../context/CurrentYearDataContext'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
 
 function formatAmount(amount: number, type: TransactionType): string {
   const formatted = amount.toLocaleString('ru-RU')
   return type === TransactionType.expense ? `-${formatted} ₽` : `+${formatted} ₽`
+}
+
+/**
+ * Компактное представление суммы для тесных мест (ячейка month-picker).
+ * Например: 12 345 → «12к», 1 234 567 → «1,2м».
+ */
+function formatCompactAmount(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace('.', ',')}м`
+  if (value >= 10_000) return `${Math.round(value / 1000)}к`
+  if (value >= 1_000) return `${(value / 1000).toFixed(1).replace('.', ',')}к`
+  return value.toLocaleString('ru-RU')
 }
 
 function formatDate(timestamp: number): string {
@@ -57,6 +69,33 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
 
 const MONTH_NAMES = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
+interface MonthSums {
+  income: number
+  expense: number
+}
+
+/**
+ * Посчитать суммы доходов и расходов по каждому месяцу года.
+ *
+ * @param transactions транзакции года.
+ * @param categoryMap категории по идентификатору (для определения типа операции).
+ * @returns карта «номер месяца (1–12) → суммы доходов и расходов».
+ */
+function calcMonthSums(transactions: Transaction[], categoryMap: Map<string, Category>): Map<number, MonthSums> {
+  const sums = new Map<number, MonthSums>()
+  for (const tx of transactions) {
+    const month = new Date(tx.date).getUTCMonth() + 1
+    let entry = sums.get(month)
+    if (!entry) {
+      entry = { income: 0, expense: 0 }
+      sums.set(month, entry)
+    }
+    if (categoryMap.get(tx.categoryId)?.type === TransactionType.income) entry.income += tx.amount
+    else entry.expense += tx.amount
+  }
+  return sums
+}
+
 function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
   year: number
   month: number
@@ -65,6 +104,23 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
 }>) {
   const now = new Date()
   const [pickerYear, setPickerYear] = useState(year)
+  const { year: currentYear, transactions: currentYearTransactions, categories } = useCurrentYearData()
+  const [otherYearTransactions, setOtherYearTransactions] = useState<Transaction[]>([])
+
+  // Транзакции текущего года берём из общих данных, остальные годы догружаем.
+  const isCurrentYear = pickerYear === currentYear
+  useEffect(() => {
+    if (isCurrentYear) return
+    let cancelled = false
+    getTransactionsByPeriod(pickerYear, 1, pickerYear, 12).then(txs => {
+      if (!cancelled) setOtherYearTransactions(txs)
+    })
+    return () => { cancelled = true }
+  }, [pickerYear, isCurrentYear])
+
+  const yearTransactions = isCurrentYear ? currentYearTransactions : otherYearTransactions
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap), [yearTransactions, categoryMap])
 
   return (
     <BottomSheet withBackdrop zIndex={120} ariaLabel="Выбор месяца" onClose={onClose} className="month-picker-sheet">
@@ -83,6 +139,7 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
           const m = i + 1
           const isSelected = pickerYear === year && m === month
           const isDisabled = pickerYear > now.getFullYear() || (pickerYear === now.getFullYear() && m > now.getMonth() + 1)
+          const sums = monthSums.get(m)
           return (
             <button
               key={m}
@@ -91,7 +148,17 @@ function MonthPickerSheet({ year, month, onClose, onChange }: Readonly<{
               disabled={isDisabled}
               onClick={() => { onChange(pickerYear, m); onClose() }}
             >
-              {name}
+              <span className="month-picker__cell-name">{name}</span>
+              {sums && (sums.expense > 0 || sums.income > 0) && (
+                <span className="month-picker__cell-sums">
+                  {sums.income > 0 && (
+                      <span className="month-picker__cell-sum month-picker__cell-sum--income">+{formatCompactAmount(sums.income)}</span>
+                  )}
+                  {sums.expense > 0 && (
+                    <span className="month-picker__cell-sum month-picker__cell-sum--expense">−{formatCompactAmount(sums.expense)}</span>
+                  )}
+                </span>
+              )}
             </button>
           )
         })}
@@ -902,28 +969,43 @@ export default function HomeScreen() {
     return () => clearTimeout(t)
   }, [scrollTopState])
 
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+
   useEffect(() => {
-    const now = new Date()
     Promise.all([
-      getTransactionsByMonth(now.getFullYear(), now.getMonth() + 1),
+      getTransactionsByPeriod(currentYear, 1, currentYear, 12),
       getAllCategories(),
     ]).then(([txs, cats]) => {
       setTransactions(txs)
       setCategories(cats)
     })
-  }, [])
+  }, [currentYear])
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
 
-  const totalIncome = transactions
+  // Список и summary на главном показывают только текущий месяц,
+  // хотя в состоянии хранится весь год (для month-picker и переиспользования).
+  const monthTransactions = transactions.filter(tx => {
+    const d = new Date(tx.date)
+    return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth - 1
+  })
+
+  const yearData = useMemo(
+    () => ({ year: currentYear, transactions, categories }),
+    [currentYear, transactions, categories],
+  )
+
+  const totalIncome = monthTransactions
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.income)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const totalSpent = transactions
+  const totalSpent = monthTransactions
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const sorted = [...transactions].sort((a, b) => b.date - a.date)
+  const sorted = [...monthTransactions].sort((a, b) => b.date - a.date)
 
   const todayKey = new Date().toLocaleDateString('en-CA')
   const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
@@ -954,6 +1036,7 @@ export default function HomeScreen() {
   const handleUpdated = (updated: Transaction) => setTransactions(prev => prev.map(tx => tx.id === updated.id ? updated : tx))
 
   return (
+    <CurrentYearDataContext.Provider value={yearData}>
     <div className="home">
       <div className="home__header">
         <h1 className="home__title">Главная</h1>
@@ -1024,5 +1107,6 @@ export default function HomeScreen() {
         />
       )}
     </div>
+    </CurrentYearDataContext.Provider>
   )
 }
