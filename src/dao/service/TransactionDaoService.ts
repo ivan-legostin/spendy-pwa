@@ -39,6 +39,22 @@ export async function getTransactionsByMonth(year: number, month: number): Promi
 }
 
 /**
+ * Получить транзакции за указанный день из БД.
+ *
+ * @param year год.
+ * @param month номер месяца (1–12).
+ * @param day число месяца (1–31).
+ * @returns promise, завершающийся списком транзакций за день.
+ */
+export async function getTransactionsByDay(year: number, month: number, day: number): Promise<Transaction[]> {
+  const start = Date.UTC(year, month - 1, day);
+  const end = Date.UTC(year, month - 1, day + 1);
+  const range = IDBKeyRange.bound(start, end, false, true);
+  const connection = await getConnection();
+  return connection.getAllFromIndex('transactions', 'date', range);
+}
+
+/**
  * Получить транзакции за указанный период из БД.
  *
  * @param startYear год начала периода.

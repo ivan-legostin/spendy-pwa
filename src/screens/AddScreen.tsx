@@ -4,12 +4,35 @@ import type { LucideIcon } from 'lucide-react'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
-import { saveTransactions } from '../dao/service/TransactionDaoService'
+import { saveTransactions, getTransactionsByDay } from '../dao/service/TransactionDaoService'
 import BottomSheet from '../components/BottomSheet'
 import './AddScreen.css'
 
 function getTodayStr(): string {
   return new Date().toISOString().split('T')[0]
+}
+
+/**
+ * Вычислить timestamp для новой транзакции по выбранной дате.
+ *
+ * Для сегодняшнего дня — текущий момент. Для прошлого/будущего дня — время самой
+ * поздней транзакции этого дня плюс 1 секунда (чтобы новая встала после уже
+ * существующих за день); если транзакций за день ещё нет — полночь UTC этого дня.
+ *
+ * @param dateStr выбранная дата в формате "YYYY-MM-DD".
+ * @returns promise с timestamp в миллисекундах для поля Transaction.date.
+ */
+async function resolveTransactionDate(dateStr: string): Promise<number> {
+  if (dateStr === getTodayStr()) {
+    return Date.now()
+  }
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const dayTransactions = await getTransactionsByDay(year, month, day)
+  if (dayTransactions.length === 0) {
+    return Date.UTC(year, month - 1, day)
+  }
+  const latestDate = Math.max(...dayTransactions.map(tx => tx.date))
+  return latestDate + 1000
 }
 
 function CalendarPopup({ date, onSelect, onClose }: Readonly<{ date: string; onSelect: (date: string) => void; onClose: () => void }>) {
@@ -129,11 +152,12 @@ export default function AddScreen() {
 
   async function handleSave() {
     if (!canSave) return
+    const transactionDate = await resolveTransactionDate(date)
     await saveTransactions([{
       id: crypto.randomUUID(),
       title: selectedCategory.title,
       amount: amountValue,
-      date: new Date(`${date}T${new Date().toISOString().slice(11)}`).getTime(),
+      date: transactionDate,
       categoryId: selectedCategory.id,
       note,
     }])
