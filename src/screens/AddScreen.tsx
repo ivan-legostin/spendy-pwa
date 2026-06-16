@@ -166,7 +166,7 @@ export default function AddScreen() {
     setDate(getTodayStr())
     setNote('')
     setSaved(true)
-    setTimeout(() => setSaved(false), 1000)
+    setTimeout(() => setSaved(false), 600)
   }
 
   let saveSuffix = ''
