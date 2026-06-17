@@ -123,7 +123,7 @@ export default function AddScreen() {
     .sort((a, b) => a.priority - b.priority)
 
   const amountValue = parseFloat(amount) || 0
-  const canSave = selectedCategory !== null && amountValue > 0
+  const canSave = selectedCategory !== null && amountValue > 0 && note.trim() !== ''
 
   function handleTypeSwitch(newType: TransactionType) {
     setType(newType)
