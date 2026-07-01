@@ -177,8 +177,19 @@
 
 .dynamics-summary {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   padding: 0 16px;
+}
+
+.dynamics-summary__range {
+  font-size: 13px;
+  color: #8e8e93;
+}
+
+.dynamics-summary__cards {
+  display: flex;
+  gap: 10px;
 }
 
 .dynamics-summary__item {

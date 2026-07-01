@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { PieChart, Pie, ResponsiveContainer, BarChart, Bar, XAxis, LabelList, ReferenceLine } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -910,6 +910,9 @@ const DYNAMICS_METRICS: ReadonlyArray<{ metric: DynamicsMetric; label: string }>
 /** Ширина одного столбца-месяца в пикселях — задаёт масштаб горизонтальной прокрутки. */
 const MONTH_COLUMN_WIDTH = 46
 
+/** Горизонтальные поля области построения BarChart — нужны для расчёта видимых месяцев. */
+const DYNAMICS_MARGIN_X = 12
+
 /** Цвет столбца для выбранной метрики и знака значения (прибыль краснеет в минусе). */
 function dynamicsBarColor(metric: DynamicsMetric, value: number): string {
   if (metric === 'income') return INCOME_COLOR
@@ -955,6 +958,7 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   const [series, setSeries] = useState<MonthlyDynamicsPoint[]>([])
   const [loading, setLoading] = useState(true)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [visibleRange, setVisibleRange] = useState<{ start: number; end: number } | null>(null)
 
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
 
@@ -973,24 +977,41 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   // Ширина графика: минимум по ширине контейнера, иначе — по числу месяцев (чтобы включалась прокрутка).
   const chartWidth = Math.max(containerWidth, series.length * MONTH_COLUMN_WIDTH)
 
-  // При открытии/смене данных проматываем к последним (самым свежим) месяцам.
+  // Определить, какие месяцы сейчас в видимой части графика, по позиции прокрутки.
+  const updateVisibleRange = useCallback(() => {
+    const el = scrollRef.current
+    if (!el || series.length === 0) return
+    const band = (chartWidth - DYNAMICS_MARGIN_X * 2) / series.length
+    if (band <= 0) return
+    const clamp = (i: number) => Math.min(series.length - 1, Math.max(0, i))
+    const left = el.scrollLeft
+    const right = left + el.clientWidth
+    setVisibleRange({
+      start: clamp(Math.floor((left - DYNAMICS_MARGIN_X) / band)),
+      end: clamp(Math.floor((right - DYNAMICS_MARGIN_X) / band)),
+    })
+  }, [series.length, chartWidth])
+
+  // При открытии/смене данных проматываем к последним месяцам и пересчитываем видимое окно.
   useEffect(() => {
     const el = scrollRef.current
     if (el) el.scrollLeft = el.scrollWidth
-  }, [series, chartWidth, loading])
+    updateVisibleRange()
+  }, [updateVisibleRange, loading])
 
-  const totals = useMemo(
-    () => series.reduce(
-      (acc, p) => ({ income: acc.income + p.income, expense: acc.expense + p.expense, profit: acc.profit + p.profit }),
-      { income: 0, expense: 0, profit: 0 },
-    ),
-    [series],
+  // Сводка считается только по месяцам в видимой части графика — иначе за годы среднее размывается.
+  const visible = visibleRange ? series.slice(visibleRange.start, visibleRange.end + 1) : series
+  const totals = visible.reduce(
+    (acc, p) => ({ income: acc.income + p.income, expense: acc.expense + p.expense, profit: acc.profit + p.profit }),
+    { income: 0, expense: 0, profit: 0 },
   )
-
   const total = totals[metric]
-  const average = series.length > 0 ? Math.round(total / series.length) : 0
+  const average = visible.length > 0 ? Math.round(total / visible.length) : 0
   const totalSign = metric === 'profit' && total < 0 ? '−' : ''
   const averageSign = metric === 'profit' && average < 0 ? '−' : ''
+  const rangeLabel = visible.length > 0
+    ? formatPeriodLabel(visible[0].year, visible[0].month, visible[visible.length - 1].year, visible[visible.length - 1].month)
+    : ''
 
   // Данные графика: цвет столбца хранится прямо в точке (recharts берёт его из поля fill).
   const chartData = useMemo(
@@ -1012,21 +1033,24 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
     return (
       <>
         <div className="dynamics-summary">
-          <div className="dynamics-summary__item">
-            <span className="dynamics-summary__label">Всего</span>
-            <span className="dynamics-summary__value">{totalSign}{Math.abs(total).toLocaleString('ru-RU')} ₽</span>
-          </div>
-          <div className="dynamics-summary__item">
-            <span className="dynamics-summary__label">В среднем за месяц</span>
-            <span className="dynamics-summary__value">{averageSign}{Math.abs(average).toLocaleString('ru-RU')} ₽</span>
+          {rangeLabel && <span className="dynamics-summary__range">{rangeLabel}</span>}
+          <div className="dynamics-summary__cards">
+            <div className="dynamics-summary__item">
+              <span className="dynamics-summary__label">Всего</span>
+              <span className="dynamics-summary__value">{totalSign}{Math.abs(total).toLocaleString('ru-RU')} ₽</span>
+            </div>
+            <div className="dynamics-summary__item">
+              <span className="dynamics-summary__label">В среднем за месяц</span>
+              <span className="dynamics-summary__value">{averageSign}{Math.abs(average).toLocaleString('ru-RU')} ₽</span>
+            </div>
           </div>
         </div>
-        <div className="dynamics-chart-scroll" ref={scrollRef} data-scroll="true">
+        <div className="dynamics-chart-scroll" ref={scrollRef} data-scroll="true" onScroll={updateVisibleRange}>
           <BarChart
             width={chartWidth}
             height={240}
             data={chartData}
-            margin={{ top: 20, right: 12, left: 12, bottom: 8 }}
+            margin={{ top: 20, right: DYNAMICS_MARGIN_X, left: DYNAMICS_MARGIN_X, bottom: 8 }}
             barCategoryGap="25%"
           >
             <XAxis
