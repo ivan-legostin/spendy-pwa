@@ -907,8 +907,11 @@ const DYNAMICS_METRICS: ReadonlyArray<{ metric: DynamicsMetric; label: string }>
   { metric: 'profit', label: 'Прибыль' },
 ]
 
-/** Ширина одного столбца-месяца в пикселях — задаёт масштаб горизонтальной прокрутки. */
-const MONTH_COLUMN_WIDTH = 46
+/** Сколько месяцев должно помещаться на экране одновременно — задаёт ширину столбца от ширины контейнера. */
+const VISIBLE_MONTHS_COUNT = 12
+
+/** Ширина столбца-месяца до первого измерения контейнера. */
+const MONTH_COLUMN_WIDTH_FALLBACK = 46
 
 /** Горизонтальные поля области построения BarChart — нужны для расчёта видимых месяцев. */
 const DYNAMICS_MARGIN_X = 12
@@ -975,8 +978,11 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
     if (scrollRef.current) setContainerWidth(scrollRef.current.clientWidth)
   }, [loading])
 
+  // Ширина столбца подобрана так, чтобы на экране помещалось VISIBLE_MONTHS_COUNT месяцев.
+  const monthColumnWidth = containerWidth > 0 ? containerWidth / VISIBLE_MONTHS_COUNT : MONTH_COLUMN_WIDTH_FALLBACK
+
   // Ширина графика: минимум по ширине контейнера, иначе — по числу месяцев (чтобы включалась прокрутка).
-  const chartWidth = Math.max(containerWidth, series.length * MONTH_COLUMN_WIDTH)
+  const chartWidth = Math.max(containerWidth, series.length * monthColumnWidth)
 
   // Определить, какие месяцы сейчас в видимой части графика, по позиции прокрутки.
   const updateVisibleRange = useCallback(() => {
