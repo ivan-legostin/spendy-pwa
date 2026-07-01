@@ -994,9 +994,12 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
     const clamp = (i: number) => Math.min(series.length - 1, Math.max(0, i))
     const left = el.scrollLeft
     const right = left + el.clientWidth
+    // Если правый край ровно совпал с началом следующего месяца (так и есть после scroll-snap),
+    // этот месяц ещё не виден ни на пиксель — его нужно исключить, а не округлять внутрь floor.
+    const EPSILON = 1e-3
     setVisibleRange({
       start: clamp(Math.floor((left - DYNAMICS_MARGIN_X) / bandWidth)),
-      end: clamp(Math.floor((right - DYNAMICS_MARGIN_X) / bandWidth)),
+      end: clamp(Math.ceil((right - DYNAMICS_MARGIN_X) / bandWidth - EPSILON) - 1),
     })
   }, [series.length, bandWidth])
 
