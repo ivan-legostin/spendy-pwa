@@ -214,6 +214,7 @@
 }
 
 .dynamics-chart-scroll {
+  position: relative;
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
@@ -221,6 +222,16 @@
   touch-action: pan-x;
   overscroll-behavior-x: contain;
   padding: 0 4px;
+  /* Прокрутка всегда останавливается на границе месяца — не бывает наполовину видимого столбца. */
+  scroll-snap-type: x mandatory;
+}
+
+.dynamics-chart-snap-point {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  scroll-snap-align: start;
+  pointer-events: none;
 }
 
 /* Comparison Sheet */

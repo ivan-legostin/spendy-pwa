@@ -984,20 +984,21 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   // Ширина графика: минимум по ширине контейнера, иначе — по числу месяцев (чтобы включалась прокрутка).
   const chartWidth = Math.max(containerWidth, series.length * monthColumnWidth)
 
+  // Ширина одного столбца внутри области построения BarChart — совпадает с шагом scroll-snap точек.
+  const bandWidth = series.length > 0 ? (chartWidth - DYNAMICS_MARGIN_X * 2) / series.length : 0
+
   // Определить, какие месяцы сейчас в видимой части графика, по позиции прокрутки.
   const updateVisibleRange = useCallback(() => {
     const el = scrollRef.current
-    if (!el || series.length === 0) return
-    const band = (chartWidth - DYNAMICS_MARGIN_X * 2) / series.length
-    if (band <= 0) return
+    if (!el || series.length === 0 || bandWidth <= 0) return
     const clamp = (i: number) => Math.min(series.length - 1, Math.max(0, i))
     const left = el.scrollLeft
     const right = left + el.clientWidth
     setVisibleRange({
-      start: clamp(Math.floor((left - DYNAMICS_MARGIN_X) / band)),
-      end: clamp(Math.floor((right - DYNAMICS_MARGIN_X) / band)),
+      start: clamp(Math.floor((left - DYNAMICS_MARGIN_X) / bandWidth)),
+      end: clamp(Math.floor((right - DYNAMICS_MARGIN_X) / bandWidth)),
     })
-  }, [series.length, chartWidth])
+  }, [series.length, bandWidth])
 
   // При открытии/смене данных проматываем к последним месяцам и пересчитываем видимое окно.
   useEffect(() => {
@@ -1060,6 +1061,14 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
           // Касания графика не всплывают до BottomSheet, иначе его drag-to-close рвёт горизонтальную прокрутку.
           onTouchStart={e => e.stopPropagation()}
         >
+          {/* Невидимые точки привязки: scroll-snap всегда останавливает прокрутку на границе месяца, без половинчатых столбцов. */}
+          {bandWidth > 0 && series.map((point, i) => (
+            <div
+              key={`${point.year}-${point.month}`}
+              className="dynamics-chart-snap-point"
+              style={{ left: DYNAMICS_MARGIN_X + i * bandWidth, width: bandWidth }}
+            />
+          ))}
           <BarChart
             width={chartWidth}
             height={240}
