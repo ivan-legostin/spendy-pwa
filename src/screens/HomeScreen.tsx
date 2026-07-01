@@ -954,6 +954,7 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   onClose: () => void
 }>) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const [metric, setMetric] = useState<DynamicsMetric>('income')
   const [series, setSeries] = useState<MonthlyDynamicsPoint[]>([])
   const [loading, setLoading] = useState(true)
@@ -1081,7 +1082,7 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   }
 
   return (
-    <BottomSheet withBackdrop zIndex={102} ariaLabel="Динамика по месяцам" onClose={onClose} className="dynamics-sheet">
+    <BottomSheet withBackdrop zIndex={102} ariaLabel="Динамика по месяцам" onClose={onClose} scrollableRef={bodyRef} className="dynamics-sheet">
       <div className="dynamics-sheet__header">
         <h2 className="dynamics-sheet__title">Динамика по месяцам</h2>
       </div>
@@ -1097,7 +1098,7 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
           </button>
         ))}
       </div>
-      <div className="dynamics-sheet__body">
+      <div className="dynamics-sheet__body" ref={bodyRef} data-scroll="true">
         {renderContent()}
       </div>
     </BottomSheet>
