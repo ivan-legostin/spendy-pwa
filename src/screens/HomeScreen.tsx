@@ -1046,7 +1046,14 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
             </div>
           </div>
         </div>
-        <div className="dynamics-chart-scroll" ref={scrollRef} data-scroll="true" onScroll={updateVisibleRange}>
+        <div
+          className="dynamics-chart-scroll"
+          ref={scrollRef}
+          data-scroll="true"
+          onScroll={updateVisibleRange}
+          // Касания графика не всплывают до BottomSheet, иначе его drag-to-close рвёт горизонтальную прокрутку.
+          onTouchStart={e => e.stopPropagation()}
+        >
           <BarChart
             width={chartWidth}
             height={240}
