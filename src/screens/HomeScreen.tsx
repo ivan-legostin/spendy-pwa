@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
-import { PieChart, Pie, ResponsiveContainer } from 'recharts'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { PieChart, Pie, ResponsiveContainer, BarChart, Bar, XAxis, LabelList, ReferenceLine } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
-import { getTransactionsByMonth, getTransactionsByPeriod, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
+import { getTransactionsByMonth, getTransactionsByPeriod, getAllTransactions, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
 import { getAllCategories } from '../dao/service/CategoryDaoService'
+import { calcMonthSums, buildMonthlyDynamicsSeries, type MonthlyDynamicsPoint } from '../utils/MonthlyStats'
 import CurrentYearDataContext, { useCurrentYearData } from '../context/CurrentYearDataContext'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
@@ -68,33 +69,6 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
 }
 
 const MONTH_NAMES = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
-
-interface MonthSums {
-  income: number
-  expense: number
-}
-
-/**
- * Посчитать суммы доходов и расходов по каждому месяцу года.
- *
- * @param transactions транзакции года.
- * @param categoryMap категории по идентификатору (для определения типа операции).
- * @returns карта «номер месяца (1–12) → суммы доходов и расходов».
- */
-function calcMonthSums(transactions: Transaction[], categoryMap: Map<string, Category>): Map<number, MonthSums> {
-  const sums = new Map<number, MonthSums>()
-  for (const tx of transactions) {
-    const month = new Date(tx.date).getUTCMonth() + 1
-    let entry = sums.get(month)
-    if (!entry) {
-      entry = { income: 0, expense: 0 }
-      sums.set(month, entry)
-    }
-    if (categoryMap.get(tx.categoryId)?.type === TransactionType.income) entry.income += tx.amount
-    else entry.expense += tx.amount
-  }
-  return sums
-}
 
 function MonthPickerSheet({ year, month, type, onClose, onChange }: Readonly<{
   year: number
@@ -920,9 +894,196 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
   )
 }
 
+/** Метрика помесячной динамики, выбираемая переключателем. */
+type DynamicsMetric = 'income' | 'profit' | 'expense'
+
+const INCOME_COLOR = '#4ade80'
+const EXPENSE_COLOR = '#f87171'
+
+/** Порядок и подписи переключателя метрик (как на превью: Доход · Прибыль · Расход). */
+const DYNAMICS_METRICS: ReadonlyArray<{ metric: DynamicsMetric; label: string }> = [
+  { metric: 'income', label: 'Доход' },
+  { metric: 'expense', label: 'Расход' },
+  { metric: 'profit', label: 'Прибыль' },
+]
+
+/** Ширина одного столбца-месяца в пикселях — задаёт масштаб горизонтальной прокрутки. */
+const MONTH_COLUMN_WIDTH = 46
+
+/** Цвет столбца для выбранной метрики и знака значения (прибыль краснеет в минусе). */
+function dynamicsBarColor(metric: DynamicsMetric, value: number): string {
+  if (metric === 'income') return INCOME_COLOR
+  if (metric === 'expense') return EXPENSE_COLOR
+  return value >= 0 ? INCOME_COLOR : EXPENSE_COLOR
+}
+
+/**
+ * Подпись оси X: сокращённый месяц, а под январём — год (ориентир при прокрутке по годам).
+ */
+function DynamicsMonthTick({ x, y, index, series }: Readonly<{
+  x?: number | string
+  y?: number | string
+  index?: number
+  series: MonthlyDynamicsPoint[]
+}>) {
+  const point = index != null ? series[index] : undefined
+  if (!point || x == null || y == null) return null
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={12} textAnchor="middle" fontSize={11} fill="#8e8e93">
+        {MONTH_NAMES[point.month - 1]}
+      </text>
+      {point.month === 1 && (
+        <text x={0} y={0} dy={26} textAnchor="middle" fontSize={10} fill="#5a5a5e">
+          {point.year}
+        </text>
+      )}
+    </g>
+  )
+}
+
+/**
+ * Помесячная динамика доходов, расходов и прибыли по всей истории операций.
+ * Одна метрика за раз (переключатель), столбцы по месяцам с горизонтальной прокруткой.
+ */
+function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
+  categories: Category[]
+  onClose: () => void
+}>) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [metric, setMetric] = useState<DynamicsMetric>('income')
+  const [series, setSeries] = useState<MonthlyDynamicsPoint[]>([])
+  const [loading, setLoading] = useState(true)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+
+  useEffect(() => {
+    setLoading(true)
+    getAllTransactions().then(txs => {
+      setSeries(buildMonthlyDynamicsSeries(txs, categoryMap))
+      setLoading(false)
+    })
+  }, [categoryMap])
+
+  useLayoutEffect(() => {
+    if (scrollRef.current) setContainerWidth(scrollRef.current.clientWidth)
+  }, [loading])
+
+  // Ширина графика: минимум по ширине контейнера, иначе — по числу месяцев (чтобы включалась прокрутка).
+  const chartWidth = Math.max(containerWidth, series.length * MONTH_COLUMN_WIDTH)
+
+  // При открытии/смене данных проматываем к последним (самым свежим) месяцам.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollLeft = el.scrollWidth
+  }, [series, chartWidth, loading])
+
+  const totals = useMemo(
+    () => series.reduce(
+      (acc, p) => ({ income: acc.income + p.income, expense: acc.expense + p.expense, profit: acc.profit + p.profit }),
+      { income: 0, expense: 0, profit: 0 },
+    ),
+    [series],
+  )
+
+  const total = totals[metric]
+  const average = series.length > 0 ? Math.round(total / series.length) : 0
+  const totalSign = metric === 'profit' && total < 0 ? '−' : ''
+  const averageSign = metric === 'profit' && average < 0 ? '−' : ''
+
+  // Данные графика: цвет столбца хранится прямо в точке (recharts берёт его из поля fill).
+  const chartData = useMemo(
+    () => series.map(point => ({ ...point, fill: dynamicsBarColor(metric, point[metric]) })),
+    [series, metric],
+  )
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="comparison-sheet__loading">
+          <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+        </div>
+      )
+    }
+    if (series.length === 0) {
+      return <div className="breakdown-sheet__empty">Пока нет операций</div>
+    }
+    return (
+      <>
+        <div className="dynamics-summary">
+          <div className="dynamics-summary__item">
+            <span className="dynamics-summary__label">Всего</span>
+            <span className="dynamics-summary__value">{totalSign}{Math.abs(total).toLocaleString('ru-RU')} ₽</span>
+          </div>
+          <div className="dynamics-summary__item">
+            <span className="dynamics-summary__label">В среднем за месяц</span>
+            <span className="dynamics-summary__value">{averageSign}{Math.abs(average).toLocaleString('ru-RU')} ₽</span>
+          </div>
+        </div>
+        <div className="dynamics-chart-scroll" ref={scrollRef} data-scroll="true">
+          <BarChart
+            width={chartWidth}
+            height={240}
+            data={chartData}
+            margin={{ top: 20, right: 12, left: 12, bottom: 8 }}
+            barCategoryGap="25%"
+          >
+            <XAxis
+              dataKey={(point: MonthlyDynamicsPoint) => `${point.year}-${point.month}`}
+              interval={0}
+              height={34}
+              tickLine={false}
+              axisLine={{ stroke: '#3a3a3c' }}
+              tick={<DynamicsMonthTick series={series} />}
+            />
+            <ReferenceLine y={0} stroke="#3a3a3c" />
+            <Bar dataKey={metric} radius={[4, 4, 0, 0]} isAnimationActive={false}>
+              <LabelList
+                dataKey={metric}
+                position="top"
+                fontSize={10}
+                fill="#8e8e93"
+                formatter={value => {
+                  const n = Number(value)
+                  return Number.isFinite(n) && n !== 0 ? formatCompactAmount(Math.abs(n)) : ''
+                }}
+              />
+            </Bar>
+          </BarChart>
+        </div>
+      </>
+    )
+  }
+
+  return (
+    <BottomSheet withBackdrop zIndex={102} ariaLabel="Динамика по месяцам" onClose={onClose} className="dynamics-sheet">
+      <div className="dynamics-sheet__header">
+        <h2 className="dynamics-sheet__title">Динамика по месяцам</h2>
+      </div>
+      <div className="dynamics-toggle">
+        {DYNAMICS_METRICS.map(({ metric: m, label }) => (
+          <button
+            key={m}
+            type="button"
+            className={`dynamics-toggle__btn${metric === m ? ' dynamics-toggle__btn--active' : ''}`}
+            onClick={() => setMetric(m)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="dynamics-sheet__body">
+        {renderContent()}
+      </div>
+    </BottomSheet>
+  )
+}
+
 function AnalyticsSheet({ categories, onClose }: Readonly<{ categories: Category[]; onClose: () => void }>) {
   const [comparisonOpen, setComparisonOpen] = useState(false)
   const [topTransactionsOpen, setTopTransactionsOpen] = useState(false)
+  const [dynamicsOpen, setDynamicsOpen] = useState(false)
   return (
     <>
       <BottomSheet withBackdrop ariaLabel="Аналитика" onClose={onClose} className="analytics-sheet">
@@ -939,12 +1100,21 @@ function AnalyticsSheet({ categories, onClose }: Readonly<{ categories: Category
           subtitle="Самые крупные расходы за год"
           onClick={() => setTopTransactionsOpen(true)}
         />
+        <AnalyticsBlockCard
+          icon={<Icons.LineChart size={20} />}
+          title="Динамика по месяцам"
+          subtitle="Доходы, расходы и прибыль во времени"
+          onClick={() => setDynamicsOpen(true)}
+        />
       </BottomSheet>
       {comparisonOpen && (
         <ComparisonSheet categories={categories} onClose={() => setComparisonOpen(false)} />
       )}
       {topTransactionsOpen && (
         <TopTransactionsSheet categories={categories} onClose={() => setTopTransactionsOpen(false)} />
+      )}
+      {dynamicsOpen && (
+        <MonthlyDynamicsSheet categories={categories} onClose={() => setDynamicsOpen(false)} />
       )}
     </>
   )
