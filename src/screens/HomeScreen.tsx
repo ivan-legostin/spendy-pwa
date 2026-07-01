@@ -898,7 +898,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
 type DynamicsMetric = 'income' | 'profit' | 'expense'
 
 const INCOME_COLOR = '#4ade80'
-const EXPENSE_COLOR = '#f87171'
+const EXPENSE_COLOR = '#94a3b8'
 
 /** Порядок и подписи переключателя метрик (как на превью: Доход · Прибыль · Расход). */
 const DYNAMICS_METRICS: ReadonlyArray<{ metric: DynamicsMetric; label: string }> = [
@@ -913,7 +913,7 @@ const MONTH_COLUMN_WIDTH = 46
 /** Горизонтальные поля области построения BarChart — нужны для расчёта видимых месяцев. */
 const DYNAMICS_MARGIN_X = 12
 
-/** Цвет столбца для выбранной метрики и знака значения (прибыль краснеет в минусе). */
+/** Цвет столбца для выбранной метрики: доход и положительная прибыль зелёные, остальное нейтральное. */
 function dynamicsBarColor(metric: DynamicsMetric, value: number): string {
   if (metric === 'income') return INCOME_COLOR
   if (metric === 'expense') return EXPENSE_COLOR

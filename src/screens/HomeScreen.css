@@ -256,7 +256,7 @@
 
 .comparison-sheet__error {
   font-size: 14px;
-  color: #f87171;
+  color: #94a3b8;
   text-align: center;
   margin: 0;
   padding: 24px 0;
@@ -374,7 +374,7 @@
 }
 
 .comparison-metric__delta--neg {
-  color: #f87171;
+  color: #94a3b8;
 }
 
 /* Top Transactions Sheet */
@@ -912,7 +912,7 @@
 }
 
 .tx-detail-sheet__btn--delete-confirm {
-  background: #ef4444;
+  background: #94a3b8;
   color: #ffffff;
 }
 
