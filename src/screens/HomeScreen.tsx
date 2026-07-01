@@ -982,7 +982,9 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   const monthColumnWidth = containerWidth > 0 ? containerWidth / VISIBLE_MONTHS_COUNT : MONTH_COLUMN_WIDTH_FALLBACK
 
   // Ширина графика: минимум по ширине контейнера, иначе — по числу месяцев (чтобы включалась прокрутка).
-  const chartWidth = Math.max(containerWidth, series.length * monthColumnWidth)
+  // Поля добавляются сверх колонок (а не вычитаются из них), чтобы bandWidth совпал с monthColumnWidth —
+  // иначе во вьюпорт влезает 12 с хвостиком band'ов и в видимое окно ошибочно попадает 13-й месяц.
+  const chartWidth = Math.max(containerWidth, series.length * monthColumnWidth + DYNAMICS_MARGIN_X * 2)
 
   // Ширина одного столбца внутри области построения BarChart — совпадает с шагом scroll-snap точек.
   const bandWidth = series.length > 0 ? (chartWidth - DYNAMICS_MARGIN_X * 2) / series.length : 0
@@ -991,16 +993,14 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
   const updateVisibleRange = useCallback(() => {
     const el = scrollRef.current
     if (!el || series.length === 0 || bandWidth <= 0) return
-    const clamp = (i: number) => Math.min(series.length - 1, Math.max(0, i))
-    const left = el.scrollLeft
-    const right = left + el.clientWidth
-    // Если правый край ровно совпал с началом следующего месяца (так и есть после scroll-snap),
-    // этот месяц ещё не виден ни на пиксель — его нужно исключить, а не округлять внутрь floor.
-    const EPSILON = 1e-3
-    setVisibleRange({
-      start: clamp(Math.floor((left - DYNAMICS_MARGIN_X) / bandWidth)),
-      end: clamp(Math.ceil((right - DYNAMICS_MARGIN_X) / bandWidth - EPSILON) - 1),
-    })
+    // Число видимых месяцев — жёсткая константа, а не замер пикселей: окно всегда ровно 12 при любой
+    // ширине экрана (или меньше, если месяцев меньше 12). Так «13-й» месяц не проскочит из-за округления.
+    const count = Math.min(VISIBLE_MONTHS_COUNT, series.length)
+    // Из прокрутки берём только левый месяц. scroll-snap всегда останавливает на границе столбца,
+    // поэтому round точно попадает в индекс; clamp удерживает окно в пределах данных у правого края.
+    const maxStart = series.length - count
+    const start = Math.min(maxStart, Math.max(0, Math.round((el.scrollLeft - DYNAMICS_MARGIN_X) / bandWidth)))
+    setVisibleRange({ start, end: start + count - 1 })
   }, [series.length, bandWidth])
 
   // При открытии/смене данных проматываем к последним месяцам и пересчитываем видимое окно.
