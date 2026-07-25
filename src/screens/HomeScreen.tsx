@@ -70,6 +70,26 @@ function SummaryCard({ income, spent, onExpenseClick, onIncomeClick }: Readonly<
 
 const MONTH_NAMES = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
 
+/**
+ * Транзакции за указанный год: текущий год берётся из общих данных, остальные годы догружаются.
+ */
+function useYearTransactions(year: number): Transaction[] {
+  const { year: currentYear, transactions: currentYearTransactions } = useCurrentYearData()
+  const [otherYearTransactions, setOtherYearTransactions] = useState<Transaction[]>([])
+
+  const isCurrentYear = year === currentYear
+  useEffect(() => {
+    if (isCurrentYear) return
+    let cancelled = false
+    getTransactionsByPeriod(year, 1, year, 12).then(txs => {
+      if (!cancelled) setOtherYearTransactions(txs)
+    })
+    return () => { cancelled = true }
+  }, [year, isCurrentYear])
+
+  return isCurrentYear ? currentYearTransactions : otherYearTransactions
+}
+
 function MonthPickerSheet({ year, month, type, onClose, onChange }: Readonly<{
   year: number
   month: number
@@ -80,21 +100,8 @@ function MonthPickerSheet({ year, month, type, onClose, onChange }: Readonly<{
 }>) {
   const now = new Date()
   const [pickerYear, setPickerYear] = useState(year)
-  const { year: currentYear, transactions: currentYearTransactions, categories } = useCurrentYearData()
-  const [otherYearTransactions, setOtherYearTransactions] = useState<Transaction[]>([])
-
-  // Транзакции текущего года берём из общих данных, остальные годы догружаем.
-  const isCurrentYear = pickerYear === currentYear
-  useEffect(() => {
-    if (isCurrentYear) return
-    let cancelled = false
-    getTransactionsByPeriod(pickerYear, 1, pickerYear, 12).then(txs => {
-      if (!cancelled) setOtherYearTransactions(txs)
-    })
-    return () => { cancelled = true }
-  }, [pickerYear, isCurrentYear])
-
-  const yearTransactions = isCurrentYear ? currentYearTransactions : otherYearTransactions
+  const { categories } = useCurrentYearData()
+  const yearTransactions = useYearTransactions(pickerYear)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
   const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap), [yearTransactions, categoryMap])
 
@@ -166,6 +173,114 @@ function MonthSelector({ year, month, type, onChange }: Readonly<{
           year={year}
           month={month}
           type={type}
+          onClose={() => setOpen(false)}
+          onChange={onChange}
+        />
+      )}
+    </>
+  )
+}
+
+/**
+ * Выбор диапазона месяцев: первый тап задаёт один край диапазона, второй — противоположный.
+ * Порядок тапов не важен, поэтому нарушить условие «начало ≤ конец» невозможно.
+ */
+function MonthRangePickerSheet({ fromMonth, toMonth, sumsYear, maxMonth, onClose, onChange }: Readonly<{
+  fromMonth: number
+  toMonth: number
+  /** Год, суммы которого показываются в ячейках. */
+  sumsYear: number
+  /** Последний доступный месяц: для текущего года — текущий месяц, иначе декабрь. */
+  maxMonth: number
+  onClose: () => void
+  onChange: (fromMonth: number, toMonth: number) => void
+}>) {
+  const [anchorMonth, setAnchorMonth] = useState<number | null>(null)
+  const { categories } = useCurrentYearData()
+  const yearTransactions = useYearTransactions(sumsYear)
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
+  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap), [yearTransactions, categoryMap])
+
+  // Пока выбран только первый край, подсвечиваем его одного — иначе показываем сохранённый диапазон.
+  const highlightFrom = anchorMonth ?? fromMonth
+  const highlightTo = anchorMonth ?? toMonth
+
+  function handleMonthClick(month: number) {
+    if (anchorMonth === null) {
+      setAnchorMonth(month)
+      return
+    }
+    onChange(Math.min(anchorMonth, month), Math.max(anchorMonth, month))
+    onClose()
+  }
+
+  return (
+    <BottomSheet withBackdrop zIndex={120} ariaLabel="Выбор диапазона месяцев" onClose={onClose} className="month-picker-sheet">
+      <div className="month-picker__header">
+        <span className="month-picker__year">
+          {anchorMonth === null ? `Суммы за ${sumsYear}` : 'Выберите второй месяц'}
+        </span>
+      </div>
+      <div className="month-picker__grid">
+        {MONTH_NAMES.map((name, i) => {
+          const m = i + 1
+          const isEdge = m === highlightFrom || m === highlightTo
+          const isInside = m > highlightFrom && m < highlightTo
+          const sums = monthSums.get(m)
+          let rangeClass = ''
+          if (isEdge) rangeClass = ' month-picker__cell--selected'
+          else if (isInside) rangeClass = ' month-picker__cell--in-range'
+          return (
+            <button
+              key={m}
+              type="button"
+              className={`month-picker__cell${rangeClass}`}
+              disabled={m > maxMonth}
+              onClick={() => handleMonthClick(m)}
+            >
+              <span className="month-picker__cell-name">{name}</span>
+              {sums && (sums.income > 0 || sums.expense > 0) && (
+                <span className="month-picker__cell-sums">
+                  {sums.income > 0 && (
+                    <span className="month-picker__cell-sum month-picker__cell-sum--income">+{formatCompactAmount(sums.income)}</span>
+                  )}
+                  {sums.expense > 0 && (
+                    <span className="month-picker__cell-sum month-picker__cell-sum--expense">−{formatCompactAmount(sums.expense)}</span>
+                  )}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </BottomSheet>
+  )
+}
+
+function MonthRangeSelector({ fromMonth, toMonth, sumsYear, maxMonth, onChange }: Readonly<{
+  fromMonth: number
+  toMonth: number
+  sumsYear: number
+  maxMonth: number
+  onChange: (fromMonth: number, toMonth: number) => void
+}>) {
+  const [open, setOpen] = useState(false)
+  const label = fromMonth === toMonth
+    ? MONTH_NAMES[fromMonth - 1]
+    : `${MONTH_NAMES[fromMonth - 1]} — ${MONTH_NAMES[toMonth - 1]}`
+
+  return (
+    <>
+      <button type="button" className="month-selector" onClick={() => setOpen(true)}>
+        <span className="month-selector__label">{label}</span>
+        <Icons.ChevronDown size={14} className="month-selector__chevron" />
+      </button>
+      {open && (
+        <MonthRangePickerSheet
+          fromMonth={fromMonth}
+          toMonth={toMonth}
+          sumsYear={sumsYear}
+          maxMonth={maxMonth}
           onClose={() => setOpen(false)}
           onChange={onChange}
         />
@@ -556,13 +671,28 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
   )
 }
 
-function isPeriodValid(p: { fromYear: number; fromMonth: number; toYear: number; toMonth: number }): boolean {
-  return p.toYear > p.fromYear || (p.toYear === p.fromYear && p.toMonth >= p.fromMonth)
-}
-
 interface PeriodStats {
   income: number
   expense: number
+}
+
+interface MonthRange {
+  from: number
+  to: number
+}
+
+/**
+ * Последний месяц, доступный для выбора при сравнении двух лет: будущие месяцы выбирать нельзя,
+ * поэтому ограничение диктует более поздний из сравниваемых годов.
+ */
+function lastAvailableMonth(yearA: number, yearB: number): number {
+  const now = new Date()
+  return Math.max(yearA, yearB) === now.getFullYear() ? now.getMonth() + 1 : 12
+}
+
+function clampMonthRange(range: MonthRange, maxMonth: number): MonthRange {
+  if (range.to <= maxMonth) return range
+  return { from: Math.min(range.from, maxMonth), to: maxMonth }
 }
 
 function calcStats(txs: Transaction[], categoryMap: Map<string, Category>): PeriodStats {
@@ -572,6 +702,14 @@ function calcStats(txs: Transaction[], categoryMap: Map<string, Category>): Peri
     else expense += tx.amount
   }
   return { income, expense }
+}
+
+function calcMonthlyAverageStats(txs: Transaction[], categoryMap: Map<string, Category>, monthCount: number): PeriodStats {
+  const total = calcStats(txs, categoryMap)
+  return {
+    income: Math.round(total.income / monthCount),
+    expense: Math.round(total.expense / monthCount),
+  }
 }
 
 function formatPeriodLabel(fromYear: number, fromMonth: number, toYear: number, toMonth: number): string {
@@ -650,36 +788,35 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
 }>) {
   const now = new Date()
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [periodA, setPeriodA] = useState({
-    fromYear: now.getFullYear() - 1, fromMonth: 1,
-    toYear: now.getFullYear() - 1, toMonth: now.getMonth() + 1,
-  })
-  const [periodB, setPeriodB] = useState({
-    fromYear: now.getFullYear(), fromMonth: 1,
-    toYear: now.getFullYear(), toMonth: now.getMonth() + 1,
-  })
+  const [yearA, setYearA] = useState(now.getFullYear() - 1)
+  const [yearB, setYearB] = useState(now.getFullYear())
+  // Диапазон месяцев общий для обоих периодов: так они всегда одной длины и среднее сравнимо.
+  const [months, setMonths] = useState<MonthRange>({ from: 1, to: now.getMonth() + 1 })
   const [statsA, setStatsA] = useState<PeriodStats | null>(null)
   const [statsB, setStatsB] = useState<PeriodStats | null>(null)
   const [loading, setLoading] = useState(true)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
 
+  const maxMonth = lastAvailableMonth(yearA, yearB)
+  const monthCount = months.to - months.from + 1
+
   useEffect(() => {
-    if (!isPeriodValid(periodA) || !isPeriodValid(periodB)) return
     setLoading(true)
     Promise.all([
-      getTransactionsByPeriod(periodA.fromYear, periodA.fromMonth, periodA.toYear, periodA.toMonth),
-      getTransactionsByPeriod(periodB.fromYear, periodB.fromMonth, periodB.toYear, periodB.toMonth),
+      getTransactionsByPeriod(yearA, months.from, yearA, months.to),
+      getTransactionsByPeriod(yearB, months.from, yearB, months.to),
     ]).then(([txsA, txsB]) => {
-      setStatsA(calcStats(txsA, categoryMap))
-      setStatsB(calcStats(txsB, categoryMap))
+      setStatsA(calcMonthlyAverageStats(txsA, categoryMap, monthCount))
+      setStatsB(calcMonthlyAverageStats(txsB, categoryMap, monthCount))
       setLoading(false)
     })
-  }, [periodA, periodB, categoryMap])
+  }, [yearA, yearB, months, monthCount, categoryMap])
 
-  const bothValid = isPeriodValid(periodA) && isPeriodValid(periodB)
-
-  const labelA = formatPeriodLabel(periodA.fromYear, periodA.fromMonth, periodA.toYear, periodA.toMonth)
-  const labelB = formatPeriodLabel(periodB.fromYear, periodB.fromMonth, periodB.toYear, periodB.toMonth)
+  // Переход на текущий год может сделать часть выбранных месяцев будущими — подрезаем диапазон.
+  function changeYear(setYear: (year: number) => void, year: number, otherYear: number) {
+    setYear(year)
+    setMonths(range => clampMonthRange(range, lastAvailableMonth(year, otherYear)))
+  }
 
   return (
     <BottomSheet withBackdrop zIndex={102} ariaLabel="Сравнение периодов" onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
@@ -688,36 +825,34 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
       </div>
       <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
         <div className="comparison-periods">
-          <div className="comparison-period-card">
+          <div className="comparison-period-card comparison-period-card--row">
             <span className="comparison-period-card__label">Период А</span>
-            <div className="comparison-period-card__selectors">
-              <MonthSelector year={periodA.fromYear} month={periodA.fromMonth} onChange={(y, m) => setPeriodA(p => ({ ...p, fromYear: y, fromMonth: m }))} />
-              <Icons.ArrowRight size={14} className="comparison-period-card__arrow" />
-              <MonthSelector year={periodA.toYear} month={periodA.toMonth} onChange={(y, m) => setPeriodA(p => ({ ...p, toYear: y, toMonth: m }))} />
-            </div>
+            <YearSelector year={yearA} onChange={year => changeYear(setYearA, year, yearB)} />
           </div>
-          <div className="comparison-period-card">
+          <div className="comparison-period-card comparison-period-card--row">
             <span className="comparison-period-card__label">Период Б</span>
-            <div className="comparison-period-card__selectors">
-              <MonthSelector year={periodB.fromYear} month={periodB.fromMonth} onChange={(y, m) => setPeriodB(p => ({ ...p, fromYear: y, fromMonth: m }))} />
-              <Icons.ArrowRight size={14} className="comparison-period-card__arrow" />
-              <MonthSelector year={periodB.toYear} month={periodB.toMonth} onChange={(y, m) => setPeriodB(p => ({ ...p, toYear: y, toMonth: m }))} />
-            </div>
+            <YearSelector year={yearB} onChange={year => changeYear(setYearB, year, yearA)} />
+          </div>
+          <div className="comparison-period-card comparison-period-card--row">
+            <span className="comparison-period-card__label">Месяцы</span>
+            <MonthRangeSelector
+              fromMonth={months.from}
+              toMonth={months.to}
+              sumsYear={yearB}
+              maxMonth={maxMonth}
+              onChange={(from, to) => setMonths({ from, to })}
+            />
           </div>
         </div>
-        {!bothValid && (
-          <p className="comparison-sheet__error">Конечная дата не может быть раньше начальной</p>
-        )}
-        {bothValid && loading && (
+        {loading && (
           <div className="comparison-sheet__loading">
             <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
           </div>
         )}
-        {bothValid && !loading && statsA && statsB && (
+        {!loading && statsA && statsB && (
           <div className="comparison-results">
-            <ComparisonMetric icon={<Icons.TrendingUp size={16} />} label="Доходы" labelA={labelA} labelB={labelB} a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
-            <ComparisonMetric icon={<Icons.TrendingDown size={16} />} label="Траты" labelA={labelA} labelB={labelB} a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
-            <ComparisonMetric icon={<Icons.Wallet size={16} />} label="Баланс" labelA={labelA} labelB={labelB} a={statsA.income - statsA.expense} b={statsB.income - statsB.expense} positiveWhenHigher={true} />
+            <ComparisonMetric icon={<Icons.TrendingUp size={16} />} label="Доходы / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
+            <ComparisonMetric icon={<Icons.TrendingDown size={16} />} label="Траты / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
           </div>
         )}
       </div>
