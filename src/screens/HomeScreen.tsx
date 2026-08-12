@@ -920,14 +920,13 @@ function CategoryComparisonCard({ row, scale, labelA, labelB, positiveWhenHigher
  * @param periodLabel диапазон месяцев, за который считались средние.
  * @param onClose обработчик закрытия листа.
  */
-function CategoryComparisonSheet({ type, statsA, statsB, categoryMap, labelA, labelB, periodLabel, onClose }: Readonly<{
+function CategoryComparisonSheet({ type, statsA, statsB, categoryMap, labelA, labelB, onClose }: Readonly<{
   type: TransactionType
   statsA: PeriodStats
   statsB: PeriodStats
   categoryMap: Map<string, Category>
   labelA: string
   labelB: string
-  periodLabel: string
   onClose: () => void
 }>) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -943,7 +942,6 @@ function CategoryComparisonSheet({ type, statsA, statsB, categoryMap, labelA, la
     <BottomSheet withBackdrop zIndex={110} ariaLabel={title} onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
       <div className="comparison-sheet__header">
         <h2 className="comparison-sheet__title">{title}</h2>
-        <span className="comparison-categories__hint">{periodLabel} · средние за месяц, от наибольшего изменения</span>
       </div>
       <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
         {rows.length === 0 && <div className="breakdown-sheet__empty">Нет операций за оба периода</div>}
@@ -1069,7 +1067,6 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
           categoryMap={categoryMap}
           labelA={String(yearA)}
           labelB={String(yearB)}
-          periodLabel={formatMonthRangeLabel(months.from, months.to)}
           onClose={() => setCategoryType(null)}
         />
       )}
