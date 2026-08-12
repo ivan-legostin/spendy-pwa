@@ -325,20 +325,40 @@
 
 .comparison-metric {
   background: #2c2c2e;
+  border: none;
   border-radius: 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.comparison-metric:active {
+  opacity: 0.75;
 }
 
 .comparison-metric__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
+.comparison-metric__chevron {
+  color: #3a3a3c;
+  flex-shrink: 0;
+}
+
+/* Занимает всю свободную ширину, прижимая дельту и шеврон к правому краю. */
 .comparison-metric__label-wrap {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -393,6 +413,162 @@
 
 .comparison-metric__delta--neg {
   color: #94a3b8;
+}
+
+/* Category Comparison */
+.comparison-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comparison-categories__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8e8e93;
+}
+
+.comparison-cat {
+  background: #2c2c2e;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comparison-cat__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comparison-cat__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #2D7FF9;
+  flex-shrink: 0;
+}
+
+.comparison-cat__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comparison-cat__delta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8e8e93;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.comparison-cat__delta--pos {
+  color: #4ade80;
+}
+
+.comparison-cat__delta--neg {
+  color: #94a3b8;
+}
+
+.comparison-cat__delta-pct {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8e8e93;
+  background: #1c1c1e;
+  border-radius: 6px;
+  padding: 3px 6px;
+}
+
+.comparison-cat__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comparison-cat__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comparison-cat__bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8e8e93;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.comparison-cat__track {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  border-radius: 4px;
+  background: #1c1c1e;
+}
+
+.comparison-cat__fill {
+  height: 100%;
+  border-radius: 4px;
+  /* Полоса «прорастает» от левого края, а не проявляется целиком. */
+  transform-origin: left center;
+  animation: comparison-bar-grow 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Цвет полос — по итогу изменения, теми же двумя цветами, что и подпись дельты. */
+.comparison-cat__fill--pos {
+  background: #4ade80;
+}
+
+.comparison-cat__fill--neg {
+  background: #94a3b8;
+}
+
+.comparison-cat__amount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f8fafc;
+  min-width: 74px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Период А приглушён: свежий период должен читаться первым. */
+.comparison-cat__bar-row--muted .comparison-cat__fill {
+  opacity: 0.35;
+}
+
+.comparison-cat__bar-row--muted .comparison-cat__amount {
+  font-weight: 500;
+  color: #8e8e93;
+}
+
+@keyframes comparison-bar-grow {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .comparison-cat__fill {
+    animation: none;
+  }
 }
 
 /* Top Transactions Sheet */

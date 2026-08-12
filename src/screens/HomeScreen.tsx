@@ -257,6 +257,12 @@ function MonthRangePickerSheet({ fromMonth, toMonth, sumsYear, maxMonth, onClose
   )
 }
 
+/** Короткая подпись диапазона месяцев, например «Янв — Авг». */
+function formatMonthRangeLabel(fromMonth: number, toMonth: number): string {
+  if (fromMonth === toMonth) return MONTH_NAMES[fromMonth - 1]
+  return `${MONTH_NAMES[fromMonth - 1]} — ${MONTH_NAMES[toMonth - 1]}`
+}
+
 function MonthRangeSelector({ fromMonth, toMonth, sumsYear, maxMonth, onChange }: Readonly<{
   fromMonth: number
   toMonth: number
@@ -265,9 +271,7 @@ function MonthRangeSelector({ fromMonth, toMonth, sumsYear, maxMonth, onChange }
   onChange: (fromMonth: number, toMonth: number) => void
 }>) {
   const [open, setOpen] = useState(false)
-  const label = fromMonth === toMonth
-    ? MONTH_NAMES[fromMonth - 1]
-    : `${MONTH_NAMES[fromMonth - 1]} — ${MONTH_NAMES[toMonth - 1]}`
+  const label = formatMonthRangeLabel(fromMonth, toMonth)
 
   return (
     <>
@@ -674,6 +678,8 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
 interface PeriodStats {
   income: number
   expense: number
+  /** Суммы операций по категориям: идентификатор категории → сумма. */
+  byCategory: Map<string, number>
 }
 
 interface MonthRange {
@@ -697,18 +703,23 @@ function clampMonthRange(range: MonthRange, maxMonth: number): MonthRange {
 
 function calcStats(txs: Transaction[], categoryMap: Map<string, Category>): PeriodStats {
   let income = 0, expense = 0
+  const byCategory = new Map<string, number>()
   for (const tx of txs) {
     if (categoryMap.get(tx.categoryId)?.type === TransactionType.income) income += tx.amount
     else expense += tx.amount
+    byCategory.set(tx.categoryId, (byCategory.get(tx.categoryId) ?? 0) + tx.amount)
   }
-  return { income, expense }
+  return { income, expense, byCategory }
 }
 
 function calcMonthlyAverageStats(txs: Transaction[], categoryMap: Map<string, Category>, monthCount: number): PeriodStats {
   const total = calcStats(txs, categoryMap)
+  const byCategory = new Map<string, number>()
+  for (const [categoryId, sum] of total.byCategory) byCategory.set(categoryId, Math.round(sum / monthCount))
   return {
     income: Math.round(total.income / monthCount),
     expense: Math.round(total.expense / monthCount),
+    byCategory,
   }
 }
 
@@ -729,7 +740,37 @@ function formatDelta(a: number, b: number): string {
   return `${sign}${abs} ₽ / ${sign}${pct}%`
 }
 
-function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHigher }: Readonly<{
+/**
+ * Как окрашивать изменение: «pos» — изменение в желаемую сторону, «neg» — в нежелательную,
+ * null — изменения нет.
+ *
+ * @param delta разница «период Б минус период А».
+ * @param positiveWhenHigher желаемым считается рост показателя (доходы), а не снижение (траты).
+ */
+function deltaSign(delta: number, positiveWhenHigher: boolean): 'pos' | 'neg' | null {
+  if (delta === 0) return null
+  return delta > 0 === positiveWhenHigher ? 'pos' : 'neg'
+}
+
+/**
+ * Изменение в процентах от периода А со знаком, например «+18%».
+ * Возвращает null, если в периоде А сумма нулевая: считать проценты не от чего.
+ */
+function formatDeltaPercent(a: number, b: number): string | null {
+  if (a === 0) return null
+  const delta = b - a
+  const sign = delta > 0 ? '+' : '−'
+  return `${sign}${Math.round(Math.abs(delta / a) * 100)}%`
+}
+
+function formatRubles(value: number): string {
+  return `${value.toLocaleString('ru-RU')} ₽`
+}
+
+/**
+ * Карточка одной метрики сравнения. Нажатие раскрывает разбивку этой метрики по категориям.
+ */
+function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHigher, onClick }: Readonly<{
   icon: ReactNode
   label: string
   labelA: string
@@ -737,19 +778,19 @@ function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHighe
   a: number
   b: number
   positiveWhenHigher: boolean
+  onClick: () => void
 }>) {
-  const delta = b - a
-  const isPositive = positiveWhenHigher ? delta > 0 : delta < 0
-  const sign = isPositive ? 'pos' : 'neg'
-  const deltaClass = delta !== 0 ? ` comparison-metric__delta--${sign}` : ''
+  const sign = deltaSign(b - a, positiveWhenHigher)
+  const deltaClass = sign ? ` comparison-metric__delta--${sign}` : ''
   return (
-    <div className="comparison-metric">
+    <button type="button" className="comparison-metric" onClick={onClick}>
       <div className="comparison-metric__header">
         <div className="comparison-metric__label-wrap">
           <div className="comparison-metric__icon">{icon}</div>
           <span className="comparison-metric__label">{label}</span>
         </div>
         <span className={`comparison-metric__delta${deltaClass}`}>{formatDelta(a, b)}</span>
+        <Icons.ChevronRight size={16} className="comparison-metric__chevron" />
       </div>
       <div className="comparison-metric__period-row">
         <span className="comparison-metric__period-label">{labelA}</span>
@@ -759,10 +800,170 @@ function ComparisonMetric({ icon, label, labelA, labelB, a, b, positiveWhenHighe
         <span className="comparison-metric__period-label">{labelB}</span>
         <span className="comparison-metric__value">{b.toLocaleString('ru-RU')} ₽</span>
       </div>
+    </button>
+  )
+}
+
+/** Сравнение одной категории: средние за месяц суммы в обоих периодах. */
+interface CategoryComparison {
+  categoryId: string
+  /** Категория из справочника; undefined, если её уже удалили, а операции остались. */
+  category: Category | undefined
+  a: number
+  b: number
+}
+
+/**
+ * Собрать сравнение по категориям выбранного типа.
+ *
+ * Берётся объединение категорий обоих периодов, чтобы были видны и появившиеся, и исчезнувшие.
+ * Порядок — от наибольшего изменения к наименьшему: сверху то, что сильнее всего развело периоды.
+ */
+function buildCategoryComparisons(
+  statsA: PeriodStats,
+  statsB: PeriodStats,
+  categoryMap: Map<string, Category>,
+  type: TransactionType,
+): CategoryComparison[] {
+  const rows: CategoryComparison[] = []
+  for (const categoryId of new Set([...statsA.byCategory.keys(), ...statsB.byCategory.keys()])) {
+    const category = categoryMap.get(categoryId)
+    if ((category?.type ?? TransactionType.expense) !== type) continue
+    const a = statsA.byCategory.get(categoryId) ?? 0
+    const b = statsB.byCategory.get(categoryId) ?? 0
+    if (a === 0 && b === 0) continue
+    rows.push({ categoryId, category, a, b })
+  }
+  return rows.sort((x, y) => Math.abs(y.b - y.a) - Math.abs(x.b - x.a))
+}
+
+/**
+ * Строка одного периода внутри карточки категории: подпись года, полоса и сумма.
+ *
+ * @param label подпись периода (год).
+ * @param value средняя за месяц сумма по категории за этот период.
+ * @param scale максимум по всем категориям — общая шкала, чтобы полосы разных карточек были сравнимы.
+ * @param sign направление изменения по категории: задаёт цвет обеих полос карточки.
+ * @param muted строка периода А: приглушена, чтобы актуальный период читался первым.
+ * @param animationDelay задержка появления полосы: строки «прорастают» каскадом сверху вниз.
+ */
+function CategoryComparisonBar({ label, value, scale, sign, muted, animationDelay }: Readonly<{
+  label: string
+  value: number
+  scale: number
+  sign: 'pos' | 'neg'
+  muted: boolean
+  animationDelay: string
+}>) {
+  // Совсем мелкие суммы всё равно должны быть видны полоской, а не исчезать в ноль.
+  const widthPercent = value > 0 && scale > 0 ? Math.max((value / scale) * 100, 2) : 0
+  return (
+    <div className={`comparison-cat__bar-row${muted ? ' comparison-cat__bar-row--muted' : ''}`}>
+      <span className="comparison-cat__bar-label">{label}</span>
+      <div className="comparison-cat__track">
+        <div
+          className={`comparison-cat__fill comparison-cat__fill--${sign}`}
+          style={{ width: `${widthPercent}%`, animationDelay }}
+        />
+      </div>
+      <span className="comparison-cat__amount">{value > 0 ? formatRubles(value) : '—'}</span>
     </div>
   )
 }
 
+function CategoryComparisonCard({ row, scale, labelA, labelB, positiveWhenHigher, index }: Readonly<{
+  row: CategoryComparison
+  scale: number
+  labelA: string
+  labelB: string
+  positiveWhenHigher: boolean
+  /** Позиция в списке: задаёт каскад анимации полос. */
+  index: number
+}>) {
+  const Icon = (Icons[row.category?.icon as keyof typeof Icons] as LucideIcon | undefined) ?? Icons.CreditCard
+  const delta = row.b - row.a
+  // Карточка окрашена только по итогу изменения: зелёная, если стало лучше, иначе нейтральная.
+  const sign = deltaSign(delta, positiveWhenHigher) ?? 'neg'
+  const percent = formatDeltaPercent(row.a, row.b)
+  // Каскад не должен растягиваться бесконечно: у дальних карточек полосы появляются сразу.
+  const animationDelay = `${Math.min(index * 40, 320)}ms`
+
+  return (
+    <div className="comparison-cat">
+      <div className="comparison-cat__header">
+        <div className="comparison-cat__icon">
+          <Icon size={15} />
+        </div>
+        <span className="comparison-cat__name">{row.category?.title ?? '—'}</span>
+        <span className={`comparison-cat__delta comparison-cat__delta--${sign}`}>
+          {delta === 0 ? 'без изменений' : `${delta > 0 ? '+' : '−'}${formatRubles(Math.abs(delta))}`}
+          <span className="comparison-cat__delta-pct">{percent ?? 'новая'}</span>
+        </span>
+      </div>
+      <div className="comparison-cat__bars">
+        <CategoryComparisonBar label={labelA} value={row.a} scale={scale} sign={sign} muted animationDelay={animationDelay} />
+        <CategoryComparisonBar label={labelB} value={row.b} scale={scale} sign={sign} muted={false} animationDelay={animationDelay} />
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Разбивка одной метрики сравнения по категориям: отдельный лист поверх сравнения периодов.
+ *
+ * @param type тип операций, по которому построена разбивка.
+ * @param statsA средние за месяц показатели периода А.
+ * @param statsB средние за месяц показатели периода Б.
+ * @param categoryMap категории по идентификатору.
+ * @param labelA подпись периода А (год).
+ * @param labelB подпись периода Б (год).
+ * @param periodLabel диапазон месяцев, за который считались средние.
+ * @param onClose обработчик закрытия листа.
+ */
+function CategoryComparisonSheet({ type, statsA, statsB, categoryMap, labelA, labelB, periodLabel, onClose }: Readonly<{
+  type: TransactionType
+  statsA: PeriodStats
+  statsB: PeriodStats
+  categoryMap: Map<string, Category>
+  labelA: string
+  labelB: string
+  periodLabel: string
+  onClose: () => void
+}>) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const rows = useMemo(
+    () => buildCategoryComparisons(statsA, statsB, categoryMap, type),
+    [statsA, statsB, categoryMap, type],
+  )
+  // Общая шкала по всем категориям: полосы разных карточек сравнимы между собой.
+  const scale = rows.reduce((max, row) => Math.max(max, row.a, row.b), 0)
+  const title = type === TransactionType.expense ? 'Траты по категориям' : 'Доходы по категориям'
+
+  return (
+    <BottomSheet withBackdrop zIndex={110} ariaLabel={title} onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
+      <div className="comparison-sheet__header">
+        <h2 className="comparison-sheet__title">{title}</h2>
+        <span className="comparison-categories__hint">{periodLabel} · средние за месяц, от наибольшего изменения</span>
+      </div>
+      <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
+        {rows.length === 0 && <div className="breakdown-sheet__empty">Нет операций за оба периода</div>}
+        <div className="comparison-categories">
+          {rows.map((row, index) => (
+            <CategoryComparisonCard
+              key={row.categoryId}
+              row={row}
+              scale={scale}
+              labelA={labelA}
+              labelB={labelB}
+              positiveWhenHigher={type === TransactionType.income}
+              index={index}
+            />
+          ))}
+        </div>
+      </div>
+    </BottomSheet>
+  )
+}
 
 function AnalyticsBlockCard({ icon, title, subtitle, onClick }: Readonly<{
   icon: ReactNode
@@ -795,6 +996,8 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
   const [statsA, setStatsA] = useState<PeriodStats | null>(null)
   const [statsB, setStatsB] = useState<PeriodStats | null>(null)
   const [loading, setLoading] = useState(true)
+  // Тип операций, разбивка по категориям которого открыта поверх сравнения; null — лист закрыт.
+  const [categoryType, setCategoryType] = useState<TransactionType | null>(null)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
 
   const maxMonth = lastAvailableMonth(yearA, yearB)
@@ -819,44 +1022,58 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
   }
 
   return (
-    <BottomSheet withBackdrop zIndex={102} ariaLabel="Сравнение периодов" onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
-      <div className="comparison-sheet__header">
-        <h2 className="comparison-sheet__title">Сравнение периодов</h2>
-      </div>
-      <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
-        <div className="comparison-periods">
-          <div className="comparison-period-card comparison-period-card--row">
-            <span className="comparison-period-card__label">Период А</span>
-            <YearSelector year={yearA} onChange={year => changeYear(setYearA, year, yearB)} />
-          </div>
-          <div className="comparison-period-card comparison-period-card--row">
-            <span className="comparison-period-card__label">Период Б</span>
-            <YearSelector year={yearB} onChange={year => changeYear(setYearB, year, yearA)} />
-          </div>
-          <div className="comparison-period-card comparison-period-card--row">
-            <span className="comparison-period-card__label">Месяцы</span>
-            <MonthRangeSelector
-              fromMonth={months.from}
-              toMonth={months.to}
-              sumsYear={yearB}
-              maxMonth={maxMonth}
-              onChange={(from, to) => setMonths({ from, to })}
-            />
-          </div>
+    <>
+      <BottomSheet withBackdrop zIndex={102} ariaLabel="Сравнение периодов" onClose={onClose} scrollableRef={scrollRef} className="comparison-sheet">
+        <div className="comparison-sheet__header">
+          <h2 className="comparison-sheet__title">Сравнение периодов</h2>
         </div>
-        {loading && (
-          <div className="comparison-sheet__loading">
-            <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+        <div className="comparison-sheet__scroll" ref={scrollRef} data-scroll="true">
+          <div className="comparison-periods">
+            <div className="comparison-period-card comparison-period-card--row">
+              <span className="comparison-period-card__label">Период А</span>
+              <YearSelector year={yearA} onChange={year => changeYear(setYearA, year, yearB)} />
+            </div>
+            <div className="comparison-period-card comparison-period-card--row">
+              <span className="comparison-period-card__label">Период Б</span>
+              <YearSelector year={yearB} onChange={year => changeYear(setYearB, year, yearA)} />
+            </div>
+            <div className="comparison-period-card comparison-period-card--row">
+              <span className="comparison-period-card__label">Месяцы</span>
+              <MonthRangeSelector
+                fromMonth={months.from}
+                toMonth={months.to}
+                sumsYear={yearB}
+                maxMonth={maxMonth}
+                onChange={(from, to) => setMonths({ from, to })}
+              />
+            </div>
           </div>
-        )}
-        {!loading && statsA && statsB && (
-          <div className="comparison-results">
-            <ComparisonMetric icon={<Icons.TrendingUp size={16} />} label="Доходы / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.income} b={statsB.income} positiveWhenHigher={true} />
-            <ComparisonMetric icon={<Icons.TrendingDown size={16} />} label="Траты / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} />
-          </div>
-        )}
-      </div>
-    </BottomSheet>
+          {loading && (
+            <div className="comparison-sheet__loading">
+              <Icons.Loader2 size={24} className="breakdown-sheet__spinner" />
+            </div>
+          )}
+          {!loading && statsA && statsB && (
+            <div className="comparison-results">
+              <ComparisonMetric icon={<Icons.TrendingUp size={16} />} label="Доходы / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.income} b={statsB.income} positiveWhenHigher={true} onClick={() => setCategoryType(TransactionType.income)} />
+              <ComparisonMetric icon={<Icons.TrendingDown size={16} />} label="Траты / мес." labelA={String(yearA)} labelB={String(yearB)} a={statsA.expense} b={statsB.expense} positiveWhenHigher={false} onClick={() => setCategoryType(TransactionType.expense)} />
+            </div>
+          )}
+        </div>
+      </BottomSheet>
+      {categoryType !== null && statsA && statsB && (
+        <CategoryComparisonSheet
+          type={categoryType}
+          statsA={statsA}
+          statsB={statsB}
+          categoryMap={categoryMap}
+          labelA={String(yearA)}
+          labelB={String(yearB)}
+          periodLabel={formatMonthRangeLabel(months.from, months.to)}
+          onClose={() => setCategoryType(null)}
+        />
+      )}
+    </>
   )
 }
 
