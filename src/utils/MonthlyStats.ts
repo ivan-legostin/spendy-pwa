@@ -11,16 +11,19 @@ export interface MonthSums {
 }
 
 /**
- * Посчитать суммы доходов и расходов по каждому месяцу одного года.
+ * Посчитать суммы доходов и расходов по каждому месяцу указанного года.
  *
- * @param transactions транзакции года.
+ * @param transactions транзакции; операции других лет игнорируются.
  * @param categoryMap категории по идентификатору (для определения типа операции).
+ * @param year год, за который считаются суммы, например 2026.
  * @returns карта «номер месяца (1–12) → суммы доходов и расходов».
  */
-export function calcMonthSums(transactions: Transaction[], categoryMap: Map<string, Category>): Map<number, MonthSums> {
+export function calcMonthSums(transactions: Transaction[], categoryMap: Map<string, Category>, year: number): Map<number, MonthSums> {
   const sums = new Map<number, MonthSums>()
   for (const tx of transactions) {
-    const month = new Date(tx.date).getUTCMonth() + 1
+    const date = new Date(tx.date)
+    if (date.getUTCFullYear() !== year) continue
+    const month = date.getUTCMonth() + 1
     let entry = sums.get(month)
     if (!entry) {
       entry = { income: 0, expense: 0 }

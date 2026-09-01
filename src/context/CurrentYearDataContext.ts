@@ -9,7 +9,7 @@ import type { Category } from '../dao/models/Category'
 export interface CurrentYearData {
   /** Текущий год (например, 2026). */
   year: number
-  /** Все транзакции за текущий год, поддерживаемые в актуальном состоянии. */
+  /** Транзакции за текущий год, поддерживаемые в актуальном состоянии; в январе к ним добавлен декабрь прошлого. */
   transactions: Transaction[]
   /** Все категории. */
   categories: Category[]

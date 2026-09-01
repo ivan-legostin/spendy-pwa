@@ -103,7 +103,7 @@ function MonthPickerSheet({ year, month, type, onClose, onChange }: Readonly<{
   const { categories } = useCurrentYearData()
   const yearTransactions = useYearTransactions(pickerYear)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
-  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap), [yearTransactions, categoryMap])
+  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap, pickerYear), [yearTransactions, categoryMap, pickerYear])
 
   return (
     <BottomSheet withBackdrop zIndex={120} ariaLabel="Выбор месяца" onClose={onClose} className="month-picker-sheet">
@@ -199,7 +199,7 @@ function MonthRangePickerSheet({ fromMonth, toMonth, sumsYear, maxMonth, onClose
   const { categories } = useCurrentYearData()
   const yearTransactions = useYearTransactions(sumsYear)
   const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
-  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap), [yearTransactions, categoryMap])
+  const monthSums = useMemo(() => calcMonthSums(yearTransactions, categoryMap, sumsYear), [yearTransactions, categoryMap, sumsYear])
 
   // Пока выбран только первый край, подсвечиваем его одного — иначе показываем сохранённый диапазон.
   const highlightFrom = anchorMonth ?? fromMonth
@@ -1550,24 +1550,31 @@ export default function HomeScreen() {
   const currentYear = now.getFullYear()
   const currentMonth = now.getMonth() + 1
 
+  // Список показывает два месяца, поэтому в январе догружаем ещё и декабрь прошлого года.
+  const loadFromYear = currentMonth === 1 ? currentYear - 1 : currentYear
+  const loadFromMonth = currentMonth === 1 ? 12 : 1
+
   useEffect(() => {
     Promise.all([
-      getTransactionsByPeriod(currentYear, 1, currentYear, 12),
+      getTransactionsByPeriod(loadFromYear, loadFromMonth, currentYear, 12),
       getAllCategories(),
     ]).then(([txs, cats]) => {
       setTransactions(txs)
       setCategories(cats)
     })
-  }, [currentYear])
+  }, [currentYear, loadFromYear, loadFromMonth])
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
 
-  // Список и summary на главном показывают только текущий месяц,
-  // хотя в состоянии хранится весь год (для month-picker и переиспользования).
-  const monthTransactions = transactions.filter(tx => {
-    const d = new Date(tx.date)
-    return d.getUTCFullYear() === currentYear && d.getUTCMonth() === currentMonth - 1
-  })
+  // Summary считается за текущий месяц, а список показывает скользящее окно из двух
+  // месяцев — текущего и прошлого, — чтобы в первые дни нового месяца он не был пустым.
+  // Date.UTC сам переносит месяц через границу года: (2026, -1) → декабрь 2025.
+  const currentMonthStart = Date.UTC(currentYear, currentMonth - 1, 1)
+  const previousMonthStart = Date.UTC(currentYear, currentMonth - 2, 1)
+  const nextMonthStart = Date.UTC(currentYear, currentMonth, 1)
+
+  const monthTransactions = transactions.filter(tx => tx.date >= currentMonthStart && tx.date < nextMonthStart)
+  const listTransactions = transactions.filter(tx => tx.date >= previousMonthStart && tx.date < nextMonthStart)
 
   const yearData = useMemo(
     () => ({ year: currentYear, transactions, categories }),
@@ -1582,7 +1589,7 @@ export default function HomeScreen() {
     .filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense)
     .reduce((sum, tx) => sum + tx.amount, 0)
 
-  const sorted = [...monthTransactions].sort((a, b) => b.date - a.date)
+  const sorted = [...listTransactions].sort((a, b) => b.date - a.date)
 
   const todayKey = new Date().toLocaleDateString('en-CA')
   const yesterdayKey = new Date(Date.now() - 86_400_000).toLocaleDateString('en-CA')
