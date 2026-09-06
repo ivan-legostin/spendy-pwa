@@ -5,8 +5,9 @@ import type { LucideIcon } from 'lucide-react'
 import type { Transaction } from '../dao/models/Transaction'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
-import { getTransactionsByMonth, getTransactionsByPeriod, getAllTransactions, deleteTransaction, updateTransaction } from '../dao/service/TransactionDaoService'
-import { getAllCategories } from '../dao/service/CategoryDaoService'
+import * as categoryRepository from '../dao/service/CategoryDaoService'
+import * as transactionRepository from '../dao/service/TransactionDaoService'
+import * as transactionService from '../service/TransactionService'
 import { calcMonthSums, buildMonthlyDynamicsSeries, type MonthlyDynamicsPoint } from '../utils/MonthlyStats'
 import CurrentYearDataContext, { useCurrentYearData } from '../context/CurrentYearDataContext'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
@@ -81,7 +82,7 @@ function useYearTransactions(year: number): Transaction[] {
   useEffect(() => {
     if (isCurrentYear) return
     let cancelled = false
-    getTransactionsByPeriod(year, 1, year, 12).then(txs => {
+    transactionRepository.findAllByPeriod(year, 1, year, 12).then(txs => {
       if (!cancelled) setOtherYearTransactions(txs)
     })
     return () => { cancelled = true }
@@ -343,7 +344,7 @@ function EditTransactionSheet({ transaction, categories, onClose, onSave }: Read
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const updated: Transaction = { ...transaction, amount: Number(amount), date: new Date(date + 'T00:00:00.000Z').getTime(), categoryId, note }
-    await updateTransaction(updated)
+    await transactionService.save(updated)
     onSave(updated)
   }
 
@@ -429,7 +430,7 @@ function TransactionDetailSheet({ transaction, category, categories, onClose, on
   const type = category?.type ?? TransactionType.expense
 
   const handleDelete = async () => {
-    await deleteTransaction(transaction.id)
+    await transactionService.deleteById(transaction.id)
     onDeleted(transaction.id)
     onClose()
   }
@@ -499,7 +500,7 @@ function CategoryBreakdownSheet({ type, categories, onClose, onDeleted, onUpdate
 
   useEffect(() => {
     setLoading(true)
-    getTransactionsByMonth(selectedYear, selectedMonth).then(txs => {
+    transactionRepository.findAllByMonth(selectedYear, selectedMonth).then(txs => {
       setTransactions(txs)
       setLoading(false)
     })
@@ -1004,8 +1005,8 @@ function ComparisonSheet({ categories, onClose }: Readonly<{
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      getTransactionsByPeriod(yearA, months.from, yearA, months.to),
-      getTransactionsByPeriod(yearB, months.from, yearB, months.to),
+      transactionRepository.findAllByPeriod(yearA, months.from, yearA, months.to),
+      transactionRepository.findAllByPeriod(yearB, months.from, yearB, months.to),
     ]).then(([txsA, txsB]) => {
       setStatsA(calcMonthlyAverageStats(txsA, categoryMap, monthCount))
       setStatsB(calcMonthlyAverageStats(txsB, categoryMap, monthCount))
@@ -1101,7 +1102,7 @@ function TopTransactionsSheet({ categories, onClose }: Readonly<{
   useEffect(() => {
     setLoading(true)
     setExcludedCategories(new Set())
-    getTransactionsByPeriod(year, 1, year, 12).then(txs => {
+    transactionRepository.findAllByPeriod(year, 1, year, 12).then(txs => {
       setAllExpenses(txs.filter(tx => categoryMap.get(tx.categoryId)?.type === TransactionType.expense))
       setLoading(false)
     })
@@ -1317,7 +1318,7 @@ function MonthlyDynamicsSheet({ categories, onClose }: Readonly<{
 
   useEffect(() => {
     setLoading(true)
-    getAllTransactions().then(txs => {
+    transactionRepository.findAll().then(txs => {
       setSeries(buildMonthlyDynamicsSeries(txs, categoryMap))
       setLoading(false)
     })
@@ -1556,8 +1557,8 @@ export default function HomeScreen() {
 
   useEffect(() => {
     Promise.all([
-      getTransactionsByPeriod(loadFromYear, loadFromMonth, currentYear, 12),
-      getAllCategories(),
+      transactionRepository.findAllByPeriod(loadFromYear, loadFromMonth, currentYear, 12),
+      categoryRepository.findAll(),
     ]).then(([txs, cats]) => {
       setTransactions(txs)
       setCategories(cats)

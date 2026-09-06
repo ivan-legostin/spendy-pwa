@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Download, Upload } from 'lucide-react';
-import { getAllCategories } from '../dao/service/CategoryDaoService';
-import { saveCategories } from '../dao/service/CategoryDaoService.ts';
-import { saveTransactions, clearTransactions, getAllTransactions } from '../dao/service/TransactionDaoService.ts';
+import * as categoryRepository from '../dao/service/CategoryDaoService.ts';
+import * as transactionRepository from '../dao/service/TransactionDaoService.ts';
+import * as transactionService from '../service/TransactionService.ts';
 import { exportToCsv } from '../utils/CsvExporter';
 import { parseCsv } from '../utils/CsvParser';
 import './SettingsScreen.css';
@@ -48,8 +48,8 @@ export default function SettingsScreen() {
 
   async function handleExport() {
     const [transactions, categories] = await Promise.all([
-      getAllTransactions(),
-      getAllCategories(),
+      transactionRepository.findAll(),
+      categoryRepository.findAll(),
     ]);
     exportToCsv(transactions, categories);
   }
@@ -57,11 +57,11 @@ export default function SettingsScreen() {
   async function processImport(file: File, replace: boolean) {
     setPendingFile(null);
     const text = await file.text();
-    const existingCategories = await getAllCategories();
+    const existingCategories = await categoryRepository.findAll();
     const { transactions, categories, errors } = parseCsv(text, existingCategories);
-    if (replace) await clearTransactions();
-    await saveCategories(categories);
-    await saveTransactions(transactions);
+    if (replace) await transactionService.deleteAll();
+    await categoryRepository.saveAll(categories);
+    await transactionService.saveAll(transactions);
     let status = `Импортировано: ${transactions.length} транзакций, ${categories.length} новых категорий`;
     if (errors.length > 0) {
       const details = errors.map(e => `строка ${e.line}: ${e.message}`).join('; ');

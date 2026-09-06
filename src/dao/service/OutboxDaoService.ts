@@ -1,12 +1,6 @@
-import { IDBPTransaction } from 'idb';
 import { ChangeLogEntry } from '../models/ChangeLogEntry.ts';
 import { OutboxRecord } from '../models/OutboxRecord.ts';
-import { getConnection } from '../ConnectionManager.ts';
-
-/**
- * Транзакция БД, открытая на запись сразу в несколько хранилищ.
- */
-export type ReadWriteTransaction = IDBPTransaction<unknown, string[], 'readwrite'>;
+import { ReadWriteTransaction, getConnection } from '../ConnectionManager.ts';
 
 /**
  * Добавить записи в исходящий журнал в рамках уже открытой транзакции БД.
@@ -15,15 +9,15 @@ export type ReadWriteTransaction = IDBPTransaction<unknown, string[], 'readwrite
  * транзакции должны попадать в БД атомарно, иначе сбой между двумя записями
  * рассинхронизирует состояние приложения и журнал.
  *
- * @param transaction транзакция БД, включающая хранилище outbox.
+ * @param databaseTransaction транзакция БД, включающая хранилище outbox.
  * @param entries записи журнала для добавления.
- * @returns promise'ы добавления каждой записи — их нужно дождаться вместе с transaction.done.
+ * @returns promise'ы добавления каждой записи — их нужно дождаться вместе с databaseTransaction.done.
  */
 export function saveAll(
-  transaction: ReadWriteTransaction,
+  databaseTransaction: ReadWriteTransaction,
   entries: ChangeLogEntry[],
 ): Promise<IDBValidKey>[] {
-  const store = transaction.objectStore('outbox');
+  const store = databaseTransaction.objectStore('outbox');
   return entries.map(entry => store.add({ entry }));
 }
 
@@ -55,6 +49,6 @@ export async function count(): Promise<number> {
  */
 export async function deleteAllById(sequences: number[]): Promise<void> {
   const connection = await getConnection();
-  const transaction = connection.transaction('outbox', 'readwrite');
-  await Promise.all([...sequences.map(sequence => transaction.store.delete(sequence)), transaction.done]);
+  const databaseTransaction = connection.transaction('outbox', 'readwrite');
+  await Promise.all([...sequences.map(sequence => databaseTransaction.store.delete(sequence)), databaseTransaction.done]);
 }

@@ -1,6 +1,5 @@
-import { IDBPTransaction } from 'idb';
 import { ChangeLogEntry } from '../models/ChangeLogEntry.ts';
-import { getConnection } from '../ConnectionManager.ts';
+import { ReadWriteTransaction, getConnection } from '../ConnectionManager.ts';
 
 /**
  * Получить все транзакции с временными метками их изменений.
@@ -17,15 +16,15 @@ export async function findAll(): Promise<Map<string, number>> {
 /**
  * Запомнить моменты применённых записей журнала в рамках уже открытой транзакции БД.
  *
- * @param transaction транзакция БД, включающая хранилище применённых записей.
+ * @param databaseTransaction транзакция БД, включающая хранилище применённых записей.
  * @param entries применённые записи журнала.
- * @returns promise'ы записи каждой отметки — их нужно дождаться вместе с transaction.done.
+ * @returns promise'ы записи каждой отметки — их нужно дождаться вместе с databaseTransaction.done.
  */
 export function saveAll(
-  transaction: IDBPTransaction<unknown, string[], 'readwrite'>,
+  databaseTransaction: ReadWriteTransaction,
   entries: ChangeLogEntry[],
 ): Promise<IDBValidKey>[] {
-  const store = transaction.objectStore('appliedEntries');
+  const store = databaseTransaction.objectStore('appliedEntries');
   return entries.map(entry => store.put({ key: entry.transactionId, timestamp: entry.timestamp }));
 }
 

@@ -1,7 +1,15 @@
-import { openDB, IDBPDatabase } from 'idb';
+import { openDB, IDBPDatabase, IDBPTransaction } from 'idb';
 import { Category } from './models/Category';
 import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
+
+/**
+ * Транзакция БД, открытая на запись сразу в несколько хранилищ.
+ *
+ * Изменение сущности и запись журнала должны попасть в БД атомарно,
+ * поэтому транзакцию открывает слой сервисов и передаёт в DAO.
+ */
+export type ReadWriteTransaction = IDBPTransaction<unknown, string[], 'readwrite'>;
 
 const DB_NAME = 'spendy-db';
 const DB_VERSION = 9;

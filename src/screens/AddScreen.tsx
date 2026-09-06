@@ -3,8 +3,9 @@ import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Category } from '../dao/models/Category'
 import { TransactionType } from '../dao/models/TransactionType'
-import { getAllCategories } from '../dao/service/CategoryDaoService'
-import { saveTransactions, getTransactionsByDay } from '../dao/service/TransactionDaoService'
+import * as categoryRepository from '../dao/service/CategoryDaoService'
+import * as transactionRepository from '../dao/service/TransactionDaoService'
+import * as transactionService from '../service/TransactionService'
 import BottomSheet from '../components/BottomSheet'
 import './AddScreen.css'
 
@@ -27,7 +28,7 @@ async function resolveTransactionDate(dateStr: string): Promise<number> {
     return Date.now()
   }
   const [year, month, day] = dateStr.split('-').map(Number)
-  const dayTransactions = await getTransactionsByDay(year, month, day)
+  const dayTransactions = await transactionRepository.findAllByDay(year, month, day)
   if (dayTransactions.length === 0) {
     return Date.UTC(year, month - 1, day)
   }
@@ -115,7 +116,7 @@ export default function AddScreen() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    getAllCategories().then(setCategories)
+    categoryRepository.findAll().then(setCategories)
   }, [])
 
   const filteredCategories = categories
@@ -153,14 +154,14 @@ export default function AddScreen() {
   async function handleSave() {
     if (!canSave) return
     const transactionDate = await resolveTransactionDate(date)
-    await saveTransactions([{
+    await transactionService.save({
       id: crypto.randomUUID(),
       title: selectedCategory.title,
       amount: amountValue,
       date: transactionDate,
       categoryId: selectedCategory.id,
       note,
-    }])
+    })
     setSelectedCategory(null)
     setAmount('')
     setDate(getTodayStr())
