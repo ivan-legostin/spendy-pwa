@@ -1,6 +1,5 @@
 import { openDB, IDBPDatabase, IDBPTransaction } from 'idb';
 import { Category } from './models/Category';
-import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 /**
@@ -29,13 +28,6 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '42ddc9f4-985e-4896-a040-4e4a5adca5ad', title: 'Инвестиции',  icon: 'Briefcase',       type: TransactionType.income,  priority: 1, colorHex: '#5AC8FA' },
 ];
 
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  { id: crypto.randomUUID(), title: 'Продукты',  amount: 18500,  date: Date.UTC(2026, 4, 3), categoryId: DEFAULT_CATEGORIES[0].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Такси',     amount: 4200,   date: Date.UTC(2026, 4, 2), categoryId: DEFAULT_CATEGORIES[1].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Зарплата',  amount: 95000,  date: Date.UTC(2026, 4, 1), categoryId: DEFAULT_CATEGORIES[8].id, note: '' },
-  { id: crypto.randomUUID(), title: 'Дивиденды', amount: 12500,  date: Date.UTC(2026, 3, 30), categoryId: DEFAULT_CATEGORIES[9].id, note: '' },
-];
-
 /**
  * Инициализированное соединение.
  */
@@ -45,9 +37,8 @@ let connectionPromise: Promise<IDBPDatabase> | null = null;
  * Получить соединение с БД.
  *
  * Перед установкой соединения проверяется наличие таблиц в БД и их генерация в случае отсутствия.
- * Таблицы наполняются данными:
- *   1. Стандартные категории.
- *   2. Фейковые транзакции.
+ * Хранилище категорий наполняется стандартным набором; транзакции приезжают
+ * из журнала изменений при первом обмене.
  *
  * @returns promise, завершающийся единственным экземпляром соединения с БД.
  */
@@ -58,7 +49,6 @@ export function getConnection(): Promise<IDBPDatabase> {
         if (oldVersion < 1) {
           const txStore = connection.createObjectStore('transactions', { keyPath: 'id' });
           txStore.createIndex('date', 'date');
-          DEFAULT_TRANSACTIONS.forEach(tx => txStore.add(tx));
           const catStore = connection.createObjectStore('categories', { keyPath: 'id' });
           DEFAULT_CATEGORIES.forEach(cat => catStore.add(cat));
         }
