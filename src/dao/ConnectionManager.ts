@@ -45,88 +45,20 @@ let connectionPromise: Promise<IDBPDatabase> | null = null;
 export function getConnection(): Promise<IDBPDatabase> {
   if (!connectionPromise) {
     connectionPromise = openDB(DB_NAME, DB_VERSION, {
-      async upgrade(connection, oldVersion, _, transaction) {
-        if (oldVersion < 1) {
-          const txStore = connection.createObjectStore('transactions', { keyPath: 'id' });
-          txStore.createIndex('date', 'date');
-          const catStore = connection.createObjectStore('categories', { keyPath: 'id' });
-          DEFAULT_CATEGORIES.forEach(cat => catStore.add(cat));
+      upgrade(connection) {
+        if (!connection.objectStoreNames.contains('transactions')) {
+          connection.createObjectStore('transactions', { keyPath: 'id' }).createIndex('date', 'date');
         }
-
-        if (oldVersion === 1) {
-          connection.deleteObjectStore('categories');
-          const catStore = connection.createObjectStore('categories', { keyPath: 'id' });
-          DEFAULT_CATEGORIES.forEach(cat => catStore.add(cat));
+        if (!connection.objectStoreNames.contains('categories')) {
+          const categoryStore = connection.createObjectStore('categories', { keyPath: 'id' });
+          DEFAULT_CATEGORIES.forEach(category => categoryStore.add(category));
         }
-
-        if (oldVersion === 2) {
-          transaction.objectStore('transactions').createIndex('date', 'date');
-        }
-
-        if (oldVersion < 4) {
-          const store = transaction.objectStore('transactions');
-          const all = await store.getAll();
-          for (const tx of all) {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(tx.date)) {
-              await store.put({ ...tx, date: `${tx.date}T00:00:00.000Z` });
-            }
+        for (const name of ['settings', 'outbox', 'appliedEntries', 'changeLogState']) {
+          if (!connection.objectStoreNames.contains(name)) {
+            connection.createObjectStore(name, name === 'outbox'
+              ? { keyPath: 'sequence', autoIncrement: true }
+              : { keyPath: 'key' });
           }
-        }
-
-        if (oldVersion < 5) {
-          const store = transaction.objectStore('transactions');
-          const all = await store.getAll();
-          for (const tx of all) {
-            if (typeof tx.date === 'string') {
-              await store.put({ ...tx, date: new Date(tx.date).getTime() });
-            }
-          }
-        }
-
-        if (oldVersion < 6) {
-          const categoryStore = transaction.objectStore('categories');
-          const transactionStore = transaction.objectStore('transactions');
-          const categories = await categoryStore.getAll();
-
-          // Категория, уже получившая константный id, занимает его: одноимённый дубликат,
-          // созданный пользователем вручную, не должен на него претендовать.
-          const occupiedDefaultIds = new Set<string>(
-            categories.map(category => category.id).filter(id => DEFAULT_CATEGORIES.some(it => it.id === id)),
-          );
-          const replacedCategoryIds = new Map<string, string>();
-
-          for (const category of categories) {
-            const defaultCategory = DEFAULT_CATEGORIES.find(it =>
-              it.title === category.title && it.type === category.type && !occupiedDefaultIds.has(it.id),
-            );
-            if (!defaultCategory) continue;
-
-            occupiedDefaultIds.add(defaultCategory.id);
-            replacedCategoryIds.set(category.id, defaultCategory.id);
-            await categoryStore.delete(category.id);
-            await categoryStore.put({ ...category, id: defaultCategory.id });
-          }
-
-          for (const tx of await transactionStore.getAll()) {
-            const replacedCategoryId = replacedCategoryIds.get(tx.categoryId);
-            if (replacedCategoryId) {
-              await transactionStore.put({ ...tx, categoryId: replacedCategoryId });
-            }
-          }
-        }
-
-        if (oldVersion < 9) {
-          // Хранилища журнала изменений. Пересоздаются, а не мигрируются: до этапа 5
-          // в них никто не пишет, а имена уточнялись по ходу разработки.
-          for (const name of ['settings', 'outbox', 'syncMeta', 'appliedEntries', 'changeLogState']) {
-            if (connection.objectStoreNames.contains(name)) {
-              connection.deleteObjectStore(name);
-            }
-          }
-          connection.createObjectStore('settings', { keyPath: 'key' });
-          connection.createObjectStore('outbox', { keyPath: 'sequence', autoIncrement: true });
-          connection.createObjectStore('appliedEntries', { keyPath: 'key' });
-          connection.createObjectStore('changeLogState', { keyPath: 'key' });
         }
       },
     });

@@ -63,21 +63,6 @@ export async function findAllByPeriod(
 }
 
 /**
- * Получить идентификаторы всех транзакций в рамках уже открытой транзакции БД.
- *
- * Нужно перед массовым удалением: на каждую транзакцию потребуется запись журнала,
- * а прочитать идентификаторы отдельным запросом нельзя — между чтением и удалением
- * список успел бы измениться.
- *
- * @param databaseTransaction транзакция БД, включающая хранилище транзакций.
- * @returns promise, завершающийся списком идентификаторов.
- */
-export async function findAllIds(databaseTransaction: ReadWriteTransaction): Promise<string[]> {
-  const keys = await databaseTransaction.objectStore('transactions').getAllKeys();
-  return keys as string[];
-}
-
-/**
  * Сохранить транзакции в рамках уже открытой транзакции БД.
  *
  * @param databaseTransaction транзакция БД, включающая хранилище транзакций.
@@ -101,14 +86,4 @@ export function saveAll(
  */
 export function deleteById(databaseTransaction: ReadWriteTransaction, id: string): Promise<void> {
   return databaseTransaction.objectStore('transactions').delete(id);
-}
-
-/**
- * Удалить все транзакции в рамках уже открытой транзакции БД.
- *
- * @param databaseTransaction транзакция БД, включающая хранилище транзакций.
- * @returns promise, завершающийся после очистки хранилища.
- */
-export function deleteAll(databaseTransaction: ReadWriteTransaction): Promise<void> {
-  return databaseTransaction.objectStore('transactions').clear();
 }

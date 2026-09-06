@@ -52,22 +52,11 @@ function buildDeleteEntry(transactionId: string, timestamp: number): ChangeLogEn
  * @returns promise, завершающийся после записи данных в БД.
  */
 export async function save(entity: Transaction): Promise<void> {
-  await saveAll([entity]);
-}
-
-/**
- * Сохранить транзакции и записать изменения в журнал.
- *
- * @param entities транзакции для сохранения.
- * @returns promise, завершающийся после записи данных в БД.
- */
-export async function saveAll(entities: Transaction[]): Promise<void> {
-  const timestamp = Date.now();
-  const entries = entities.map(entity => buildUpsertEntry(entity, timestamp));
+  const entry = buildUpsertEntry(entity, Date.now());
   const databaseTransaction = await openDatabaseTransaction();
   await Promise.all([
-    ...transactionRepository.saveAll(databaseTransaction, entities),
-    ...outboxRepository.saveAll(databaseTransaction, entries),
+    ...transactionRepository.saveAll(databaseTransaction, [entity]),
+    ...outboxRepository.saveAll(databaseTransaction, [entry]),
     databaseTransaction.done,
   ]);
 }
@@ -84,26 +73,6 @@ export async function deleteById(transactionId: string): Promise<void> {
   await Promise.all([
     transactionRepository.deleteById(databaseTransaction, transactionId),
     ...outboxRepository.saveAll(databaseTransaction, [buildDeleteEntry(transactionId, timestamp)]),
-    databaseTransaction.done,
-  ]);
-}
-
-/**
- * Удалить все транзакции и записать удаление каждой в журнал.
- *
- * Записи журнала обязательны: без них на другом устройстве стёртые транзакции
- * вернутся при следующем обмене — там про очистку никто не узнает.
- *
- * @returns promise, завершающийся после очистки хранилища.
- */
-export async function deleteAll(): Promise<void> {
-  const timestamp = Date.now();
-  const databaseTransaction = await openDatabaseTransaction();
-  const transactionIds = await transactionRepository.findAllIds(databaseTransaction);
-  const entries = transactionIds.map(transactionId => buildDeleteEntry(transactionId, timestamp));
-  await Promise.all([
-    transactionRepository.deleteAll(databaseTransaction),
-    ...outboxRepository.saveAll(databaseTransaction, entries),
     databaseTransaction.done,
   ]);
 }
