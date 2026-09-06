@@ -1562,6 +1562,11 @@ export default function HomeScreen() {
   const appliedChangesVersion = useSyncExternalStore(subscribeToAppliedChanges, getAppliedChangesVersion)
 
   const pullToRefresh = usePullToRefresh(scrollRef, exchangeQuietly)
+  const pullIconClassName = [
+    'home__pull-icon',
+    pullToRefresh.isReadyToRefresh ? 'home__pull-icon--ready' : '',
+    pullToRefresh.isRefreshing ? 'home__pull-icon--spinning' : '',
+  ].filter(Boolean).join(' ')
 
   useEffect(() => {
     Promise.all([
@@ -1647,10 +1652,7 @@ export default function HomeScreen() {
         className="home__pull"
         style={{ height: pullToRefresh.pullDistance, transition: pullToRefresh.isPulling ? 'none' : undefined }}
       >
-        <Icons.RefreshCw
-          size={20}
-          className={pullToRefresh.isRefreshing ? 'home__pull-icon home__pull-icon--spinning' : 'home__pull-icon'}
-        />
+        <Icons.RefreshCw size={22} strokeWidth={2.5} className={pullIconClassName} />
       </div>
       <div
         className="home__tx-scroll"

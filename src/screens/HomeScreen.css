@@ -1588,8 +1588,24 @@
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
-  color: #94a3b8;
   transition: height 0.2s ease;
+}
+
+.home__pull-icon {
+  color: #2D7FF9;
+  /* Тени накладываются друг на друга: каждая размывает результат предыдущей.
+     Одна тень большого радиуса на контуре в 2px расплывается до неразличимой. */
+  filter: drop-shadow(0 0 2px rgba(45, 127, 249, 0.7));
+  transition: filter 0.2s ease;
+}
+
+/* Порог пройден: отпустишь — обменяется. */
+.home__pull-icon--ready,
+.home__pull-icon--spinning {
+  filter:
+    drop-shadow(0 0 2px #2D7FF9)
+    drop-shadow(0 0 6px #2D7FF9)
+    drop-shadow(0 0 14px rgba(45, 127, 249, 0.9));
 }
 
 .home__pull-icon--spinning {

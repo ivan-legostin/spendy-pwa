@@ -16,6 +16,14 @@ const REFRESHING_HEIGHT_PX = 44
 const DAMPING = 0.5
 
 /**
+ * Сколько времени полоска обновления держится на экране минимум.
+ *
+ * Обмен часто завершается за десятки миллисекунд — без этой задержки
+ * иконка мигает и жест выглядит рваным.
+ */
+const MIN_REFRESH_DURATION_MS = 600
+
+/**
  * Состояние жеста «потянуть вниз для обновления».
  */
 export interface PullToRefresh {
@@ -23,6 +31,8 @@ export interface PullToRefresh {
   pullDistance: number
   /** Идёт ли обновление. */
   isRefreshing: boolean
+  /** Пройден ли порог — то есть сработает ли обновление, если отпустить сейчас. */
+  isReadyToRefresh: boolean
   /** Тянут ли список прямо сейчас — на время жеста анимация высоты выключается. */
   isPulling: boolean
   /** Повесить на прокручиваемый контейнер. */
@@ -89,11 +99,21 @@ export function usePullToRefresh(
 
     setIsRefreshing(true)
     setPullDistance(REFRESHING_HEIGHT_PX)
-    refresh().finally(() => {
+    Promise.all([
+      refresh().catch(() => undefined),
+      new Promise(resolve => setTimeout(resolve, MIN_REFRESH_DURATION_MS)),
+    ]).then(() => {
       setIsRefreshing(false)
       setPullDistance(0)
     })
   }
 
-  return { pullDistance, isRefreshing, isPulling, handleTouchStart, handleTouchEnd }
+  return {
+    pullDistance,
+    isRefreshing,
+    isReadyToRefresh: pullDistance >= PULL_THRESHOLD_PX,
+    isPulling,
+    handleTouchStart,
+    handleTouchEnd,
+  }
 }
