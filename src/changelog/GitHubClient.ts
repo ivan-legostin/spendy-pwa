@@ -43,6 +43,10 @@ interface WriteResponse {
 /**
  * Выполнить запрос к API GitHub.
  *
+ * Ответы намеренно не кешируются: GitHub отдаёт их с заголовком
+ * Cache-Control: private, max-age=60, и без этого браузер целую минуту
+ * возвращал бы прежнее дерево, скрывая только что отправленные чужие записи.
+ *
  * @param token personal access token.
  * @param path путь запроса относительно api.github.com.
  * @param init параметры fetch.
@@ -51,6 +55,7 @@ interface WriteResponse {
 async function request(token: string, path: string, init?: RequestInit): Promise<Response> {
   try {
     return await fetch(`${API_ORIGIN}${path}`, {
+      cache: 'no-store',
       ...init,
       headers: {
         Authorization: `Bearer ${token}`,
