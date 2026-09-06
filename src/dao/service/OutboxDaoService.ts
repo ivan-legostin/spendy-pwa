@@ -44,11 +44,14 @@ export async function count(): Promise<number> {
 /**
  * Удалить из исходящего журнала записи, успешно отправленные в репозиторий.
  *
+ * @param databaseTransaction транзакция БД, включающая хранилище outbox.
  * @param sequences порядковые номера отправленных записей.
- * @returns promise, завершающийся после удаления записей.
+ * @returns promise'ы удаления каждой записи — их нужно дождаться вместе с databaseTransaction.done.
  */
-export async function deleteAllById(sequences: number[]): Promise<void> {
-  const connection = await getConnection();
-  const databaseTransaction = connection.transaction('outbox', 'readwrite');
-  await Promise.all([...sequences.map(sequence => databaseTransaction.store.delete(sequence)), databaseTransaction.done]);
+export function deleteAllById(
+  databaseTransaction: ReadWriteTransaction,
+  sequences: number[],
+): Promise<void>[] {
+  const store = databaseTransaction.objectStore('outbox');
+  return sequences.map(sequence => store.delete(sequence));
 }

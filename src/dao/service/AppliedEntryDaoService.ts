@@ -27,15 +27,3 @@ export function saveAll(
   const store = databaseTransaction.objectStore('appliedEntries');
   return entries.map(entry => store.put({ key: entry.transactionId, timestamp: entry.timestamp }));
 }
-
-/**
- * Проверить, устарела ли запись журнала — то есть применялась ли к этой транзакции более поздняя.
- *
- * @param appliedTimestamps моменты последних применённых записей.
- * @param entry проверяемая запись журнала.
- * @returns true, если запись применять не нужно.
- */
-export function isEntryOutdated(appliedTimestamps: Map<string, number>, entry: ChangeLogEntry): boolean {
-  const appliedTimestamp = appliedTimestamps.get(entry.transactionId);
-  return appliedTimestamp !== undefined && appliedTimestamp >= entry.timestamp;
-}
