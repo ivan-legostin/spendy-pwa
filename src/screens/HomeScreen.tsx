@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent, type ReactNode } from 'react'
 import { PieChart, Pie, ResponsiveContainer, BarChart, Bar, XAxis, LabelList, ReferenceLine } from 'recharts'
 import * as Icons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -10,6 +10,7 @@ import * as transactionRepository from '../dao/service/TransactionDaoService'
 import * as transactionService from '../service/TransactionService'
 import { calcMonthSums, buildMonthlyDynamicsSeries, type MonthlyDynamicsPoint } from '../utils/MonthlyStats'
 import CurrentYearDataContext, { useCurrentYearData } from '../context/CurrentYearDataContext'
+import { getAppliedChangesVersion, subscribeToAppliedChanges } from '../changelog/AppliedChangesNotifier'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
 
@@ -1555,6 +1556,9 @@ export default function HomeScreen() {
   const loadFromYear = currentMonth === 1 ? currentYear - 1 : currentYear
   const loadFromMonth = currentMonth === 1 ? 12 : 1
 
+  // Обмен может пройти в фоне, пока экран открыт: тогда счётчик меняется и данные перечитываются.
+  const appliedChangesVersion = useSyncExternalStore(subscribeToAppliedChanges, getAppliedChangesVersion)
+
   useEffect(() => {
     Promise.all([
       transactionRepository.findAllByPeriod(loadFromYear, loadFromMonth, currentYear, 12),
@@ -1563,7 +1567,7 @@ export default function HomeScreen() {
       setTransactions(txs)
       setCategories(cats)
     })
-  }, [currentYear, loadFromYear, loadFromMonth])
+  }, [currentYear, loadFromYear, loadFromMonth, appliedChangesVersion])
 
   const categoryMap = new Map(categories.map(c => [c.id, c]))
 

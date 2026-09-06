@@ -4,6 +4,7 @@ import { Transaction } from '../dao/models/Transaction.ts';
 import { ReadWriteTransaction, getConnection } from '../dao/ConnectionManager.ts';
 import * as outboxRepository from '../dao/service/OutboxDaoService.ts';
 import * as transactionRepository from '../dao/service/TransactionDaoService.ts';
+import { scheduleExchange } from '../changelog/ExchangeScheduler.ts';
 
 /**
  * Хранилища, которые меняются вместе при любой правке транзакций:
@@ -59,6 +60,7 @@ export async function save(entity: Transaction): Promise<void> {
     ...outboxRepository.saveAll(databaseTransaction, [entry]),
     databaseTransaction.done,
   ]);
+  scheduleExchange();
 }
 
 /**
@@ -75,4 +77,5 @@ export async function deleteById(transactionId: string): Promise<void> {
     ...outboxRepository.saveAll(databaseTransaction, [buildDeleteEntry(transactionId, timestamp)]),
     databaseTransaction.done,
   ]);
+  scheduleExchange();
 }

@@ -1,12 +1,16 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import BottomNav from './components/BottomNav'
 import HomeScreen from './screens/HomeScreen'
 import AddScreen from './screens/AddScreen'
 import SettingsScreen from './screens/SettingsScreen'
+import { startAutomaticExchange } from './changelog/ExchangeScheduler'
 
 export default function App() {
   const location = useLocation()
+
+  useEffect(startAutomaticExchange, [])
 
   const {
     needRefresh: [needRefresh],

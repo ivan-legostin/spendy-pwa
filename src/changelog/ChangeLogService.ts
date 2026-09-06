@@ -10,6 +10,7 @@ import * as changeLogStateRepository from '../dao/service/ChangeLogStateDaoServi
 import * as outboxRepository from '../dao/service/OutboxDaoService.ts';
 import * as settingsRepository from '../dao/service/SettingsDaoService.ts';
 import * as transactionRepository from '../dao/service/TransactionDaoService.ts';
+import { notifyAppliedChanges } from './AppliedChangesNotifier.ts';
 import { ExchangeResult } from './ExchangeResult.ts';
 import { GitHubApiError } from './GitHubApiError.ts';
 import { DEVICES_DIRECTORY } from './RepositoryConfig.ts';
@@ -285,6 +286,7 @@ async function pull(token: string, fileShas: FileShas): Promise<Omit<ExchangeRes
 
   if (applicable.length > 0) {
     await applyRemoteEntries(applicable);
+    notifyAppliedChanges();
   }
 
   // Кеш версий обновляется только после успешного применения:
@@ -302,14 +304,57 @@ async function pull(token: string, fileShas: FileShas): Promise<Omit<ExchangeRes
 }
 
 /**
+ * Обмен, выполняющийся прямо сейчас, либо null.
+ */
+let runningExchange: Promise<ExchangeResult> | null = null;
+
+/**
+ * Признак того, что во время текущего обмена поступила заявка на следующий.
+ */
+let isRerunRequested = false;
+
+/**
  * Обменяться журналом изменений с репозиторием: отправить свои записи, применить чужие.
+ *
+ * Одновременно выполняется не более одного обмена: два параллельных отправили бы
+ * исходящий журнал дважды и продублировали строки в файле. Заявка, поступившая во
+ * время работы, не теряется — она выполняется следующим заходом, потому что могла
+ * принести правки, сделанные уже после начала текущего обмена.
+ *
+ * @returns promise, завершающийся итогом обмена.
+ */
+export function exchangeChanges(): Promise<ExchangeResult> {
+  if (runningExchange) {
+    isRerunRequested = true;
+    return runningExchange;
+  }
+
+  runningExchange = (async () => {
+    try {
+      let result = await runExchange();
+      while (isRerunRequested) {
+        isRerunRequested = false;
+        result = await runExchange();
+      }
+      return result;
+    } finally {
+      isRerunRequested = false;
+      runningExchange = null;
+    }
+  })();
+
+  return runningExchange;
+}
+
+/**
+ * Выполнить один обмен: отправить свои записи, применить чужие.
  *
  * Порядок важен: сначала отправка. Тогда собственные изменения уже отмечены
  * применёнными, и чтение не вернёт их обратно поверх более свежего состояния.
  *
  * @returns promise, завершающийся итогом обмена.
  */
-export async function exchangeChanges(): Promise<ExchangeResult> {
+async function runExchange(): Promise<ExchangeResult> {
   const token = await settingsRepository.getSetting<string>(SettingKey.githubToken);
   if (!token) {
     throw new Error('Не указан токен GitHub');
