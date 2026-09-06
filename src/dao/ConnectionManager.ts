@@ -4,7 +4,7 @@ import { Transaction } from './models/Transaction';
 import { TransactionType } from './models/TransactionType';
 
 const DB_NAME = 'spendy-db';
-const DB_VERSION = 6;
+const DB_VERSION = 9;
 
 const DEFAULT_CATEGORIES: Category[] = [
   // Категории расходов
@@ -115,6 +115,20 @@ export function getConnection(): Promise<IDBPDatabase> {
               await transactionStore.put({ ...tx, categoryId: replacedCategoryId });
             }
           }
+        }
+
+        if (oldVersion < 9) {
+          // Хранилища журнала изменений. Пересоздаются, а не мигрируются: до этапа 5
+          // в них никто не пишет, а имена уточнялись по ходу разработки.
+          for (const name of ['settings', 'outbox', 'syncMeta', 'appliedEntries', 'changeLogState']) {
+            if (connection.objectStoreNames.contains(name)) {
+              connection.deleteObjectStore(name);
+            }
+          }
+          connection.createObjectStore('settings', { keyPath: 'key' });
+          connection.createObjectStore('outbox', { keyPath: 'sequence', autoIncrement: true });
+          connection.createObjectStore('appliedEntries', { keyPath: 'key' });
+          connection.createObjectStore('changeLogState', { keyPath: 'key' });
         }
       },
     });
