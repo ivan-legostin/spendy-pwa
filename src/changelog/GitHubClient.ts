@@ -31,6 +31,11 @@ interface ContentsResponse {
   sha: string;
 }
 
+interface BlobResponse {
+  content: string;
+  encoding: string;
+}
+
 interface WriteResponse {
   content: { sha: string };
 }
@@ -109,6 +114,29 @@ async function fail(response: Response): Promise<never> {
 }
 
 /**
+ * Прочитать содержимое объекта-файла напрямую.
+ *
+ * Contents API отдаёт содержимое только для файлов до мегабайта, у Git Blobs API
+ * потолок сто мегабайт. Журнал за месяц массового импорта мегабайт перешагивает.
+ *
+ * @param token personal access token.
+ * @param sha blob sha объекта.
+ * @returns promise, завершающийся содержимым файла.
+ */
+async function readBlob(token: string, sha: string): Promise<string> {
+  const response = await request(token, `${REPOSITORY_PATH}/git/blobs/${sha}`);
+  if (!response.ok) {
+    await fail(response);
+  }
+
+  const body: BlobResponse = await response.json();
+  if (body.encoding !== 'base64') {
+    throw new GitHubApiError(response.status, `Содержимое пришло в неизвестной кодировке: ${body.encoding}`);
+  }
+  return decodeBase64ToUtf8(body.content);
+}
+
+/**
  * Получить список файлов репозитория с их версиями одним запросом.
  *
  * Позволяет не скачивать файлы, чей blob sha не изменился с прошлого чтения.
@@ -155,11 +183,11 @@ export async function readFile(token: string, path: string): Promise<RemoteFile 
   }
 
   const body: ContentsResponse = await response.json();
-  if (body.encoding !== 'base64') {
-    throw new GitHubApiError(response.status, `Файл ${path} слишком велик для чтения через Contents API`);
-  }
+  const text = body.encoding === 'base64'
+    ? decodeBase64ToUtf8(body.content)
+    : await readBlob(token, body.sha);
 
-  return { text: decodeBase64ToUtf8(body.content), sha: body.sha };
+  return { text, sha: body.sha };
 }
 
 /**
