@@ -19,9 +19,13 @@ let scheduledExchange: number | undefined;
  * Автоматический обмен срывается штатно — в метро, в самолёте, с истёкшим
  * токеном. Показывать это при каждом открытии приложения незачем: неотправленные
  * записи остаются в исходящем журнале, а разобраться помогает кнопка в настройках.
+ *
+ * @returns promise, завершающийся после обмена — в том числе неудачного.
  */
-function exchangeQuietly(): void {
-  exchangeChanges().catch((error: unknown) => console.warn('Автоматический обмен не удался', error));
+export function exchangeQuietly(): Promise<void> {
+  return exchangeChanges()
+    .then(() => undefined)
+    .catch((error: unknown) => console.warn('Обмен не удался', error));
 }
 
 /**

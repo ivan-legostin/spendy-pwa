@@ -11,6 +11,8 @@ import * as transactionService from '../service/TransactionService'
 import { calcMonthSums, buildMonthlyDynamicsSeries, type MonthlyDynamicsPoint } from '../utils/MonthlyStats'
 import CurrentYearDataContext, { useCurrentYearData } from '../context/CurrentYearDataContext'
 import { getAppliedChangesVersion, subscribeToAppliedChanges } from '../changelog/AppliedChangesNotifier'
+import { exchangeQuietly } from '../changelog/ExchangeScheduler'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
 import BottomSheet, { type BottomSheetHandle } from '../components/BottomSheet'
 import './HomeScreen.css'
 
@@ -1559,6 +1561,8 @@ export default function HomeScreen() {
   // Обмен может пройти в фоне, пока экран открыт: тогда счётчик меняется и данные перечитываются.
   const appliedChangesVersion = useSyncExternalStore(subscribeToAppliedChanges, getAppliedChangesVersion)
 
+  const pullToRefresh = usePullToRefresh(scrollRef, exchangeQuietly)
+
   useEffect(() => {
     Promise.all([
       transactionRepository.findAllByPeriod(loadFromYear, loadFromMonth, currentYear, 12),
@@ -1639,7 +1643,23 @@ export default function HomeScreen() {
         onExpenseClick={() => setOpenSheet(TransactionType.expense)}
         onIncomeClick={() => setOpenSheet(TransactionType.income)}
       />
-      <div className="home__tx-scroll" data-scroll="true" ref={scrollRef} onScroll={handleScroll}>
+      <div
+        className="home__pull"
+        style={{ height: pullToRefresh.pullDistance, transition: pullToRefresh.isPulling ? 'none' : undefined }}
+      >
+        <Icons.RefreshCw
+          size={20}
+          className={pullToRefresh.isRefreshing ? 'home__pull-icon home__pull-icon--spinning' : 'home__pull-icon'}
+        />
+      </div>
+      <div
+        className="home__tx-scroll"
+        data-scroll="true"
+        ref={scrollRef}
+        onScroll={handleScroll}
+        onTouchStart={pullToRefresh.handleTouchStart}
+        onTouchEnd={pullToRefresh.handleTouchEnd}
+      >
         <div className="home__transactions">
           {[...grouped.entries()].map(([dateKey, txs]) => (
             <div key={dateKey} className="tx-group">
